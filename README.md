@@ -4,7 +4,7 @@ A production-ready web dashboard for monitoring water container temperature meas
 
 ## Overview
 
-This application ingests JSON measurement files from 20 research stations (4 containers each), stores them in a SQLite database, and provides an interactive dashboard for visualization and data quality monitoring.
+This application ingests JSON measurement files from research stations (4 containers each), stores them in a SQLite database, and provides an interactive dashboard for visualization and data quality monitoring.
 
 ## Features
 

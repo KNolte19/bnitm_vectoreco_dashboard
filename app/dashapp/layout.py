@@ -56,20 +56,6 @@ def create_layout():
                 ),
             ], style={'marginBottom': 15}),
             
-            # Connection quality slider
-            html.Div([
-                html.Label('Minimum Connection Quality:', style={'fontWeight': 'bold'}),
-                dcc.Slider(
-                    id='quality-slider',
-                    min=1,
-                    max=4,
-                    step=1,
-                    value=1,
-                    marks={i: str(i) for i in range(1, 5)},
-                    tooltip={'placement': 'bottom', 'always_visible': True}
-                ),
-            ], style={'marginBottom': 20}),
-            
             # Update button
             html.Button('Update Dashboard', id='update-button', n_clicks=0,
                        style={'width': '100%', 'padding': 10, 'fontSize': 16,
