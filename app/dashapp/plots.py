@@ -4,16 +4,22 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 
-def create_timeseries_plot(df: pd.DataFrame) -> go.Figure:
+def create_timeseries_plot(df: pd.DataFrame, temp_types: list = None, separate_by_sensor_container: bool = False) -> go.Figure:
     """Create an interactive time series plot of temperatures using Plotly.
     
     Args:
-        df: DataFrame with timestamp, temperature_water, temperature_air columns
+        df: DataFrame with timestamp, temperature_water, temperature_air, sensor_id, container_id columns
+        temp_types: List of temperature types to display ('air', 'water'). None means both.
+        separate_by_sensor_container: If True, create separate lines for each sensor/container combination
         
     Returns:
         Plotly Figure object
     """
     fig = go.Figure()
+    
+    # Default to showing both if not specified
+    if temp_types is None:
+        temp_types = ['air', 'water']
     
     if df.empty:
         # Create empty plot with message
@@ -30,25 +36,91 @@ def create_timeseries_plot(df: pd.DataFrame) -> go.Figure:
         )
         return fig
     
-    # Add water temperature trace
-    fig.add_trace(go.Scatter(
-        x=df['timestamp'],
-        y=df['temperature_water'],
-        mode='lines',
-        name='Water Temperature',
-        line=dict(color='#3498db', width=2),
-        hovertemplate='<b>Water</b><br>Time: %{x}<br>Temp: %{y:.2f}°C<extra></extra>'
-    ))
-    
-    # Add air temperature trace
-    fig.add_trace(go.Scatter(
-        x=df['timestamp'],
-        y=df['temperature_air'],
-        mode='lines',
-        name='Air Temperature',
-        line=dict(color='#e74c3c', width=2),
-        hovertemplate='<b>Air</b><br>Time: %{x}<br>Temp: %{y:.2f}°C<extra></extra>'
-    ))
+    if separate_by_sensor_container:
+        # Create separate lines for each sensor/container combination
+        # Define color palettes
+        water_colors = ['#3498db', '#2980b9', '#5dade2', '#1f618d', '#85c1e9', '#21618c']
+        air_colors = ['#e74c3c', '#c0392b', '#ec7063', '#922b21', '#f1948a', '#641e16']
+        
+        # Get unique sensor/container combinations
+        if 'sensor_id' in df.columns and 'container_id' in df.columns:
+            combinations = df[['sensor_id', 'container_id']].drop_duplicates().sort_values(['sensor_id', 'container_id'])
+            
+            water_idx = 0
+            air_idx = 0
+            
+            for _, row in combinations.iterrows():
+                sensor_id = row['sensor_id']
+                container_id = row['container_id']
+                mask = (df['sensor_id'] == sensor_id) & (df['container_id'] == container_id)
+                df_subset = df[mask].sort_values('timestamp')
+                
+                label_prefix = f'S{sensor_id}/C{container_id}'
+                
+                # Add water temperature trace if selected
+                if 'water' in temp_types:
+                    fig.add_trace(go.Scatter(
+                        x=df_subset['timestamp'],
+                        y=df_subset['temperature_water'],
+                        mode='lines',
+                        name=f'{label_prefix} Water',
+                        line=dict(color=water_colors[water_idx % len(water_colors)], width=1.5),
+                        hovertemplate=f'<b>{label_prefix} Water</b><br>Time: %{{x}}<br>Temp: %{{y:.2f}}°C<extra></extra>'
+                    ))
+                    water_idx += 1
+                
+                # Add air temperature trace if selected
+                if 'air' in temp_types:
+                    fig.add_trace(go.Scatter(
+                        x=df_subset['timestamp'],
+                        y=df_subset['temperature_air'],
+                        mode='lines',
+                        name=f'{label_prefix} Air',
+                        line=dict(color=air_colors[air_idx % len(air_colors)], width=1.5, dash='dot'),
+                        hovertemplate=f'<b>{label_prefix} Air</b><br>Time: %{{x}}<br>Temp: %{{y:.2f}}°C<extra></extra>'
+                    ))
+                    air_idx += 1
+        else:
+            # Fallback if columns are missing
+            if 'water' in temp_types:
+                fig.add_trace(go.Scatter(
+                    x=df['timestamp'],
+                    y=df['temperature_water'],
+                    mode='lines',
+                    name='Water Temperature',
+                    line=dict(color='#3498db', width=2),
+                ))
+            if 'air' in temp_types:
+                fig.add_trace(go.Scatter(
+                    x=df['timestamp'],
+                    y=df['temperature_air'],
+                    mode='lines',
+                    name='Air Temperature',
+                    line=dict(color='#e74c3c', width=2),
+                ))
+    else:
+        # Combined view: aggregate all data
+        # Add water temperature trace if selected
+        if 'water' in temp_types:
+            fig.add_trace(go.Scatter(
+                x=df['timestamp'],
+                y=df['temperature_water'],
+                mode='lines',
+                name='Water Temperature',
+                line=dict(color='#3498db', width=2),
+                hovertemplate='<b>Water</b><br>Time: %{x}<br>Temp: %{y:.2f}°C<extra></extra>'
+            ))
+        
+        # Add air temperature trace if selected
+        if 'air' in temp_types:
+            fig.add_trace(go.Scatter(
+                x=df['timestamp'],
+                y=df['temperature_air'],
+                mode='lines',
+                name='Air Temperature',
+                line=dict(color='#e74c3c', width=2),
+                hovertemplate='<b>Air</b><br>Time: %{x}<br>Temp: %{y:.2f}°C<extra></extra>'
+            ))
     
     # Update layout
     fig.update_layout(
@@ -72,16 +144,16 @@ def create_timeseries_plot(df: pd.DataFrame) -> go.Figure:
         ),
         hovermode='x unified',
         legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
+            orientation="v",
+            yanchor="top",
+            y=1,
+            xanchor="left",
+            x=1.02
         ),
         plot_bgcolor='white',
         paper_bgcolor='white',
         height=500,
-        margin=dict(l=60, r=30, t=80, b=60)
+        margin=dict(l=60, r=150, t=80, b=60)
     )
     
     return fig
