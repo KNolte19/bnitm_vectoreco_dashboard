@@ -220,3 +220,66 @@ def get_all_container_ids() -> List[int]:
         return df['container_id'].tolist() if not df.empty else []
     finally:
         conn.close()
+
+
+def get_sensors_by_location(locations: Optional[List[str]] = None) -> List[int]:
+    """Get sensor IDs filtered by location(s).
+    
+    Args:
+        locations: Optional list of locations to filter by
+        
+    Returns:
+        List of sensor IDs available for the given locations
+    """
+    conn = get_connection()
+    
+    if locations:
+        placeholders = ','.join('?' * len(locations))
+        query = f"SELECT DISTINCT sensor_id FROM measurements WHERE location IN ({placeholders}) ORDER BY sensor_id"
+        params = locations
+    else:
+        query = "SELECT DISTINCT sensor_id FROM measurements ORDER BY sensor_id"
+        params = []
+    
+    try:
+        df = pd.read_sql_query(query, conn, params=params)
+        return df['sensor_id'].tolist() if not df.empty else []
+    finally:
+        conn.close()
+
+
+def get_containers_by_location_and_sensor(
+    locations: Optional[List[str]] = None,
+    sensor_ids: Optional[List[int]] = None
+) -> List[int]:
+    """Get container IDs filtered by location(s) and/or sensor(s).
+    
+    Args:
+        locations: Optional list of locations to filter by
+        sensor_ids: Optional list of sensor IDs to filter by
+        
+    Returns:
+        List of container IDs available for the given filters
+    """
+    conn = get_connection()
+    
+    query = "SELECT DISTINCT container_id FROM measurements WHERE 1=1"
+    params = []
+    
+    if locations:
+        placeholders = ','.join('?' * len(locations))
+        query += f" AND location IN ({placeholders})"
+        params.extend(locations)
+    
+    if sensor_ids:
+        placeholders = ','.join('?' * len(sensor_ids))
+        query += f" AND sensor_id IN ({placeholders})"
+        params.extend(sensor_ids)
+    
+    query += " ORDER BY container_id"
+    
+    try:
+        df = pd.read_sql_query(query, conn, params=params)
+        return df['container_id'].tolist() if not df.empty else []
+    finally:
+        conn.close()

@@ -18,17 +18,33 @@ def register_callbacks(app):
             Output('sensor-dropdown', 'options'),
             Output('container-dropdown', 'options'),
         ],
-        Input('date-range-picker', 'start_date')  # Triggers on start_date change including initial load
+        [
+            Input('date-range-picker', 'start_date'),  # Triggers on initial load
+            Input('location-dropdown', 'value'),
+            Input('sensor-dropdown', 'value'),
+        ]
     )
-    def update_filter_options(_):
-        """Update available options for location, sensor, and container dropdowns."""
+    def update_filter_options(_, selected_locations, selected_sensors):
+        """Update available options for sensor and container dropdowns based on location selection."""
+        # Always show all locations
         locations = repository.get_all_locations()
-        sensors = repository.get_all_sensor_ids()
-        containers = repository.get_all_container_ids()
-        
         location_options = [{'label': loc, 'value': loc} for loc in locations]
-        sensor_options = [{'label': f'Sensor {s}', 'value': s} for s in sensors]
-        container_options = [{'label': f'Container {c}', 'value': c} for c in containers]
+        
+        # Filter sensors based on selected locations
+        if selected_locations:
+            available_sensors = repository.get_sensors_by_location(selected_locations)
+        else:
+            available_sensors = repository.get_all_sensor_ids()
+        sensor_options = [{'label': f'Sensor {s}', 'value': s} for s in available_sensors]
+        
+        # Filter containers based on selected locations and sensors
+        if selected_locations or selected_sensors:
+            available_containers = repository.get_containers_by_location_and_sensor(
+                selected_locations, selected_sensors
+            )
+        else:
+            available_containers = repository.get_all_container_ids()
+        container_options = [{'label': f'Container {c}', 'value': c} for c in available_containers]
         
         return location_options, sensor_options, container_options
     
@@ -47,9 +63,11 @@ def register_callbacks(app):
             Input('location-dropdown', 'value'),
             Input('sensor-dropdown', 'value'),
             Input('container-dropdown', 'value'),
+            Input('temperature-type-checklist', 'value'),
+            Input('separate-lines-checklist', 'value'),
         ]
     )
-    def update_dashboard(start_date, end_date, locations, sensors, containers):
+    def update_dashboard(start_date, end_date, locations, sensors, containers, temp_types, separate_lines):
         """Update all dashboard components based on filters."""
         # Parse dates and add time component (full day range)
         if start_date:
@@ -75,7 +93,8 @@ def register_callbacks(app):
         )
         
         # Create time series plot
-        timeseries_fig = create_timeseries_plot(df_measurements)
+        separate = 'separate' in separate_lines if separate_lines else False
+        timeseries_fig = create_timeseries_plot(df_measurements, temp_types, separate)
         
         # Fetch latest status
         df_latest = repository.fetch_latest_per_location_container()
