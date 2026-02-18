@@ -18,7 +18,7 @@ def register_callbacks(app):
             Output('sensor-dropdown', 'options'),
             Output('container-dropdown', 'options'),
         ],
-        Input('date-range-picker', 'start_date')  # Trigger on initial load
+        Input('date-range-picker', 'start_date')  # Triggers on start_date change including initial load
     )
     def update_filter_options(_):
         """Update available options for location, sensor, and container dropdowns."""

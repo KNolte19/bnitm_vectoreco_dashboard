@@ -2,6 +2,9 @@
 from dash import dcc, html, dash_table
 from datetime import datetime, timedelta
 
+# Constants
+TABLE_PAGE_SIZE = 10
+
 
 def create_layout():
     """Create the Dash application layout.
@@ -117,7 +120,7 @@ def create_layout():
                         'backgroundColor': '#f8f9fa'
                     }
                 ],
-                page_size=10,
+                page_size=TABLE_PAGE_SIZE,
             ),
         ], style={
             'marginBottom': 30,
@@ -156,7 +159,7 @@ def create_layout():
                         'backgroundColor': '#f8f9fa'
                     }
                 ],
-                page_size=10,
+                page_size=TABLE_PAGE_SIZE,
             ),
         ], style={
             'marginBottom': 30,
