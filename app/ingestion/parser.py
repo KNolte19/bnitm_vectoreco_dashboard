@@ -2,7 +2,7 @@
 import json
 import logging
 from typing import Dict, Optional, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 from dateutil import parser as dateutil_parser
 from app import config
 
@@ -59,14 +59,14 @@ def parse_json_file(filepath: str) -> Tuple[Optional[Dict], Optional[str]]:
             timestamp = dateutil_parser.parse(data['timestamp'])
             if timestamp.tzinfo is None:
                 # Assume UTC if no timezone
-                timestamp = timestamp.replace(tzinfo=datetime.now().astimezone().tzinfo)
+                timestamp = timestamp.replace(tzinfo=timezone.utc)
             # Convert to UTC and format as ISO string
-            validated['timestamp'] = timestamp.astimezone(tz=None).strftime('%Y-%m-%d %H:%M:%S')
+            validated['timestamp'] = timestamp.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
             
             received_at = dateutil_parser.parse(data['received_at'])
             if received_at.tzinfo is None:
-                received_at = received_at.replace(tzinfo=datetime.now().astimezone().tzinfo)
-            validated['received_at'] = received_at.astimezone(tz=None).strftime('%Y-%m-%d %H:%M:%S')
+                received_at = received_at.replace(tzinfo=timezone.utc)
+            validated['received_at'] = received_at.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         except (ValueError, TypeError) as e:
             return None, f"Invalid datetime field: {e}"
         

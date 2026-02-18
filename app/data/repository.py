@@ -143,12 +143,12 @@ def fetch_gap_stats(
         
         df['timestamp'] = pd.to_datetime(df['timestamp'])
         
-        # Calculate expected number of measurements
+        # Calculate expected number of measurements using pd.Timedelta
         start_dt = pd.to_datetime(start)
         end_dt = pd.to_datetime(end)
-        freq_minutes = int(expected_freq.replace('min', ''))
-        total_minutes = (end_dt - start_dt).total_seconds() / 60
-        expected_count = int(total_minutes / freq_minutes) + 1
+        freq_delta = pd.Timedelta(expected_freq)
+        total_duration = end_dt - start_dt
+        expected_count = int(total_duration / freq_delta) + 1
         
         # Group by sensor_id and container_id to count actual measurements
         stats = df.groupby(['sensor_id', 'container_id', 'location']).agg(

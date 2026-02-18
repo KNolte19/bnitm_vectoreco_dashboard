@@ -3,7 +3,7 @@
 import json
 import sys
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import random
 
 # Add parent directory to path
@@ -28,8 +28,8 @@ def generate_sample_data(output_dir: str, num_days: int = 2):
         ("Test Area 5", 5, [501, 502, 503, 504]),
     ]
     
-    # Base timestamp - start 2 days ago
-    base_time = datetime.now() - timedelta(days=num_days)
+    # Base timestamp - start 2 days ago (UTC)
+    base_time = datetime.now(timezone.utc) - timedelta(days=num_days)
     
     # Generate measurements every 5 minutes
     intervals_per_day = 24 * 60 // 5  # 288 intervals per day
