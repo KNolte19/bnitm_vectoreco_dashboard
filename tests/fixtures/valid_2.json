@@ -1,0 +1,10 @@
+{
+    "sensor_id": 1,
+    "container_id": 102,
+    "location": "Renke Garden 1",
+    "timestamp": "2024-06-01T12:05:00Z",
+    "received_at": "2024-06-01T12:05:05Z",
+    "temperature_water": 23.0,
+    "temperature_air": 25.5,
+    "connection_quality": 3
+}
