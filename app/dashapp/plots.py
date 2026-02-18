@@ -1,118 +1,135 @@
-"""Seaborn plot generation and rendering for Dash."""
-import io
-import base64
+"""Plotly plot generation for Dash."""
 import pandas as pd
-import matplotlib
-matplotlib.use('Agg')  # Non-interactive backend
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 
-def fig_to_base64(fig) -> str:
-    """Convert a matplotlib figure to base64-encoded PNG.
-    
-    Args:
-        fig: Matplotlib figure
-        
-    Returns:
-        Base64-encoded PNG string
-    """
-    buf = io.BytesIO()
-    fig.savefig(buf, format='png', bbox_inches='tight', dpi=100)
-    buf.seek(0)
-    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
-    plt.close(fig)
-    return img_base64
-
-
-def create_timeseries_plot(df: pd.DataFrame) -> str:
-    """Create a time series plot of temperatures.
+def create_timeseries_plot(df: pd.DataFrame) -> go.Figure:
+    """Create an interactive time series plot of temperatures using Plotly.
     
     Args:
         df: DataFrame with timestamp, temperature_water, temperature_air columns
         
     Returns:
-        Base64-encoded PNG string
+        Plotly Figure object
     """
+    fig = go.Figure()
+    
     if df.empty:
         # Create empty plot with message
-        fig, ax = plt.subplots(figsize=(12, 6))
-        ax.text(0.5, 0.5, 'No data available for selected filters',
-                ha='center', va='center', fontsize=14)
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
-        ax.axis('off')
-        return fig_to_base64(fig)
+        fig.add_annotation(
+            text="No data available for selected filters",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5, showarrow=False,
+            font=dict(size=16, color="gray")
+        )
+        fig.update_layout(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            height=400
+        )
+        return fig
     
-    # Set seaborn style
-    sns.set_style("whitegrid")
+    # Add water temperature trace
+    fig.add_trace(go.Scatter(
+        x=df['timestamp'],
+        y=df['temperature_water'],
+        mode='lines',
+        name='Water Temperature',
+        line=dict(color='#3498db', width=2),
+        hovertemplate='<b>Water</b><br>Time: %{x}<br>Temp: %{y:.2f}°C<extra></extra>'
+    ))
     
-    # Create figure
-    fig, ax = plt.subplots(figsize=(12, 6))
+    # Add air temperature trace
+    fig.add_trace(go.Scatter(
+        x=df['timestamp'],
+        y=df['temperature_air'],
+        mode='lines',
+        name='Air Temperature',
+        line=dict(color='#e74c3c', width=2),
+        hovertemplate='<b>Air</b><br>Time: %{x}<br>Temp: %{y:.2f}°C<extra></extra>'
+    ))
     
-    # Plot water temperature
-    sns.lineplot(
-        data=df,
-        x='timestamp',
-        y='temperature_water',
-        label='Water Temperature',
-        ax=ax,
-        color='blue',
-        linewidth=1.5
+    # Update layout
+    fig.update_layout(
+        title=dict(
+            text='Temperature Time Series',
+            font=dict(size=18, color='#2c3e50'),
+            x=0.5,
+            xanchor='center'
+        ),
+        xaxis=dict(
+            title='Time',
+            showgrid=True,
+            gridcolor='#ecf0f1',
+            zeroline=False
+        ),
+        yaxis=dict(
+            title='Temperature (°C)',
+            showgrid=True,
+            gridcolor='#ecf0f1',
+            zeroline=False
+        ),
+        hovermode='x unified',
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        ),
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        height=500,
+        margin=dict(l=60, r=30, t=80, b=60)
     )
     
-    # Plot air temperature
-    sns.lineplot(
-        data=df,
-        x='timestamp',
-        y='temperature_air',
-        label='Air Temperature',
-        ax=ax,
-        color='red',
-        linewidth=1.5
-    )
-    
-    ax.set_xlabel('Time', fontsize=12)
-    ax.set_ylabel('Temperature (°C)', fontsize=12)
-    ax.set_title('Temperature Time Series', fontsize=14, fontweight='bold')
-    ax.legend(fontsize=10)
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    
-    return fig_to_base64(fig)
+    return fig
 
 
-def create_gap_bar_chart(df: pd.DataFrame) -> str:
-    """Create a bar chart of missing measurement counts.
+def create_gap_bar_chart(df: pd.DataFrame) -> go.Figure:
+    """Create an interactive bar chart of missing measurement counts using Plotly.
     
     Args:
         df: DataFrame with sensor_id, container_id, missing_count columns
         
     Returns:
-        Base64-encoded PNG string
+        Plotly Figure object
     """
+    fig = go.Figure()
+    
     if df.empty:
         # Create empty plot with message
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.text(0.5, 0.5, 'No data available',
-                ha='center', va='center', fontsize=14)
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
-        ax.axis('off')
-        return fig_to_base64(fig)
+        fig.add_annotation(
+            text="No data available",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5, showarrow=False,
+            font=dict(size=16, color="gray")
+        )
+        fig.update_layout(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            height=400
+        )
+        return fig
     
     # Filter to only show sensors with missing data
     df_with_gaps = df[df['missing_count'] > 0].copy()
     
     if df_with_gaps.empty:
         # No gaps found
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.text(0.5, 0.5, 'No missing measurements detected',
-                ha='center', va='center', fontsize=14, color='green')
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
-        ax.axis('off')
-        return fig_to_base64(fig)
+        fig.add_annotation(
+            text="✓ No missing measurements detected",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5, showarrow=False,
+            font=dict(size=18, color="#27ae60")
+        )
+        fig.update_layout(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            height=400
+        )
+        return fig
     
     # Create label for each sensor/container combination
     df_with_gaps['label'] = (
@@ -120,25 +137,41 @@ def create_gap_bar_chart(df: pd.DataFrame) -> str:
         '/C' + df_with_gaps['container_id'].astype(str)
     )
     
-    # Set seaborn style
-    sns.set_style("whitegrid")
+    # Create bar chart
+    fig.add_trace(go.Bar(
+        x=df_with_gaps['label'],
+        y=df_with_gaps['missing_count'],
+        marker=dict(
+            color='#e67e22',
+            line=dict(color='#d35400', width=1)
+        ),
+        hovertemplate='<b>%{x}</b><br>Missing: %{y}<extra></extra>'
+    ))
     
-    # Create figure
-    fig, ax = plt.subplots(figsize=(10, 6))
-    
-    # Create bar plot
-    sns.barplot(
-        data=df_with_gaps,
-        x='label',
-        y='missing_count',
-        ax=ax,
-        color='coral'
+    # Update layout
+    fig.update_layout(
+        title=dict(
+            text='Missing Measurement Intervals by Sensor/Container',
+            font=dict(size=18, color='#2c3e50'),
+            x=0.5,
+            xanchor='center'
+        ),
+        xaxis=dict(
+            title='Sensor/Container',
+            showgrid=False,
+            tickangle=-45
+        ),
+        yaxis=dict(
+            title='Missing Measurements',
+            showgrid=True,
+            gridcolor='#ecf0f1',
+            zeroline=False
+        ),
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        height=400,
+        margin=dict(l=60, r=30, t=80, b=100),
+        showlegend=False
     )
     
-    ax.set_xlabel('Sensor/Container', fontsize=12)
-    ax.set_ylabel('Missing Measurements', fontsize=12)
-    ax.set_title('Missing Measurement Intervals', fontsize=14, fontweight='bold')
-    plt.xticks(rotation=45, ha='right')
-    plt.tight_layout()
-    
-    return fig_to_base64(fig)
+    return fig
