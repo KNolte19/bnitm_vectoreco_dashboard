@@ -9,6 +9,7 @@ def fetch_measurements(
     start: str,
     end: str,
     locations: Optional[List[str]] = None,
+    sensor_ids: Optional[List[int]] = None,
     container_ids: Optional[List[int]] = None,
     min_quality: Optional[int] = None
 ) -> pd.DataFrame:
@@ -18,6 +19,7 @@ def fetch_measurements(
         start: Start datetime (ISO format string)
         end: End datetime (ISO format string)
         locations: Optional list of locations to filter by
+        sensor_ids: Optional list of sensor IDs to filter by
         container_ids: Optional list of container IDs to filter by
         min_quality: Optional minimum connection quality (1-4)
         
@@ -41,6 +43,11 @@ def fetch_measurements(
         placeholders = ','.join('?' * len(locations))
         query += f" AND location IN ({placeholders})"
         params.extend(locations)
+    
+    if sensor_ids:
+        placeholders = ','.join('?' * len(sensor_ids))
+        query += f" AND sensor_id IN ({placeholders})"
+        params.extend(sensor_ids)
     
     if container_ids:
         placeholders = ','.join('?' * len(container_ids))
@@ -177,6 +184,23 @@ def get_all_locations() -> List[str]:
     try:
         df = pd.read_sql_query(query, conn)
         return df['location'].tolist() if not df.empty else []
+    finally:
+        conn.close()
+
+
+def get_all_sensor_ids() -> List[int]:
+    """Get all unique sensor IDs from the database.
+    
+    Returns:
+        List of sensor IDs
+    """
+    conn = get_connection()
+    
+    query = "SELECT DISTINCT sensor_id FROM measurements ORDER BY sensor_id"
+    
+    try:
+        df = pd.read_sql_query(query, conn)
+        return df['sensor_id'].tolist() if not df.empty else []
     finally:
         conn.close()
 
