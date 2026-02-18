@@ -1,0 +1,9 @@
+{
+    "sensor_id": 3,
+    "container_id": 301,
+    "location": "Lab Station 3",
+    "timestamp": "2024-06-01T12:15:00Z",
+    "received_at": "2024-06-01T12:15:05Z",
+    "temperature_air": 24.5,
+    "connection_quality": 2
+}
