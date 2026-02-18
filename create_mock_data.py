@@ -130,10 +130,9 @@ def write_mock_json_inbox(
 
     written = 0
 
-    # Pre-create container IDs per station (stable and realistic)
-    # Example: sensor 1 -> containers 101..104, sensor 2 -> 201..204, etc.
+    # Pre-create container IDs per station (numbered 1-4 for all sensors)
     station_container_ids = {
-        sensor_id: [sensor_id * 100 + (i + 1) for i in range(containers_per_station)]
+        sensor_id: [i + 1 for i in range(containers_per_station)]
         for sensor_id in range(1, stations + 1)
     }
 
@@ -182,12 +181,14 @@ def write_mock_json_inbox(
     return written
 
 if __name__ == "__main__":
+    # Calculate duration from 01.01.2026 to 18.02.2026
+    # From Jan 1 to Feb 18 is 48 days
     count = write_mock_json_inbox(
         out_dir="data/inbox",
         stations=20,
         containers_per_station=4,
-        start_utc="2024-06-01T00:00:00Z",
-        duration_hours=6,      # change to 24 for a full day
+        start_utc="2026-01-01T00:00:00Z",
+        duration_hours=48 * 24,  # 48 days from Jan 1 to Feb 18, 2026
         freq_minutes=5,
         seed=42,
         include_duplicates=False,  # set True to test dedupe/ignore behavior
