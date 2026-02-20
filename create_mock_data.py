@@ -9,12 +9,9 @@ from pathlib import Path
 # Configuration (edit as needed)
 # ----------------------------
 DEFAULT_LOCATIONS = [
-    "Renke Garden 1", "Renke Garden 2", "Renke Garden 3", "Renke Garden 4",
-    "Renke Garden 5", "Renke Garden 6", "Renke Garden 7", "Renke Garden 8",
-    "Renke Garden 9", "Renke Garden 10", "Renke Garden 11", "Renke Garden 12",
-    "Renke Garden 13", "Renke Garden 14", "Renke Garden 15", "Renke Garden 16",
-    "Renke Garden 17", "Renke Garden 18", "Renke Garden 19", "Renke Garden 20",
-]
+    "Renke Garden 1", "Renke Garden 2", "Leif Garden 1", "Felix Garden 1",
+    "Kristopher Garden 1", "BNITM Garden 1", "NEED Garden 1", "NEED Garden 2",
+    "NEED Garden 3", "NEED Garden 4", "NEED Garden 5", "NEED Garden 6"]
 
 def _iso_z(dt: datetime) -> str:
     """UTC ISO string with Z suffix."""
@@ -185,11 +182,11 @@ if __name__ == "__main__":
     # From Jan 1 to Feb 18 is 48 days
     count = write_mock_json_inbox(
         out_dir="data/inbox",
-        stations=20,
+        stations=4,
         containers_per_station=4,
         start_utc="2026-01-01T00:00:00Z",
-        duration_hours=48 * 24,  # 48 days from Jan 1 to Feb 18, 2026
-        freq_minutes=5,
+        duration_hours=10 * 24,  # 10 days from Jan 1 to Jan 11, 2026
+        freq_minutes=60,
         seed=42,
         include_duplicates=False,  # set True to test dedupe/ignore behavior
         duplicate_rate=0.02,

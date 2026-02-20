@@ -1,0 +1,2 @@
+- Warning system per e-mail
+- Show Warnining on top of dashboard

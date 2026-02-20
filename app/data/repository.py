@@ -114,7 +114,7 @@ def fetch_latest_per_location_container() -> pd.DataFrame:
 def fetch_gap_stats(
     start: str,
     end: str,
-    expected_freq: str = "5min"
+    expected_freq: str = "60min"
 ) -> pd.DataFrame:
     """Calculate missing measurement intervals for each (sensor_id, container_id).
     
