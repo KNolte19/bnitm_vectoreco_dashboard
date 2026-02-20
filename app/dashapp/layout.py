@@ -17,6 +17,14 @@ def create_layout():
     start_date = end_date - timedelta(days=1)
     
     layout = html.Div([
+
+        # ── Warning banner (hidden when no issues) ──────────────────────────
+        html.Div(
+            id='warning-banner',
+            children=[],
+            style={'display': 'none'},
+        ),
+
         html.H1('VectorEco Dashboard', 
                 style={'textAlign': 'center', 'marginBottom': 30, 'color': '#2c3e50'}),
         
@@ -157,11 +165,11 @@ def create_layout():
             'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'
         }),
         
-        # Data quality view
+        # Network connectivity view
         html.Div([
-            html.H3('Data Quality - Missing Intervals', 
+            html.H3('Network Connectivity',
                    style={'marginBottom': 15, 'color': '#34495e'}),
-            dcc.Graph(id='gap-chart',
+            dcc.Graph(id='connectivity-chart',
                      config={'displayModeBar': True, 'displaylogo': False}),
             dash_table.DataTable(
                 id='gap-stats-table',

@@ -1,5 +1,6 @@
 """Repository layer for querying measurements data."""
 import pandas as pd
+from datetime import datetime, timedelta
 from typing import Optional, List
 from app.data.db import get_connection
 from app import config
@@ -281,5 +282,176 @@ def get_containers_by_location_and_sensor(
     try:
         df = pd.read_sql_query(query, conn, params=params)
         return df['container_id'].tolist() if not df.empty else []
+    finally:
+        conn.close()
+
+
+def fetch_connectivity_stats(
+    start: str,
+    end: str,
+    locations: Optional[List[str]] = None,
+    sensor_ids: Optional[List[int]] = None,
+) -> pd.DataFrame:
+    """Fetch connectivity statistics grouped by adaptive time bins.
+
+    For each (time_bin, sensor_id) the function computes:
+    - received_count : number of messages actually received
+    - expected_count : number of messages expected based on sensor config frequency
+    - avg_quality    : mean connection_quality value
+    - ratio          : received_count / expected_count (capped at 1.0)
+
+    Args:
+        start: Start datetime (ISO format string)
+        end: End datetime (ISO format string)
+        locations: Optional list of locations to filter by
+        sensor_ids: Optional list of sensor IDs to filter by
+
+    Returns:
+        DataFrame with columns: time_bin, sensor_id, location,
+        received_count, expected_count, avg_quality, ratio
+    """
+    conn = get_connection()
+
+    query = """
+        SELECT sensor_id, location, timestamp, connection_quality
+        FROM measurements
+        WHERE timestamp >= ? AND timestamp <= ?
+    """
+    params = [start, end]
+
+    if locations:
+        placeholders = ','.join('?' * len(locations))
+        query += f" AND location IN ({placeholders})"
+        params.extend(locations)
+
+    if sensor_ids:
+        placeholders = ','.join('?' * len(sensor_ids))
+        query += f" AND sensor_id IN ({placeholders})"
+        params.extend(sensor_ids)
+
+    query += " ORDER BY sensor_id, timestamp"
+
+    try:
+        df = pd.read_sql_query(query, conn, params=params)
+
+        empty_cols = [
+            'time_bin', 'sensor_id', 'location',
+            'received_count', 'expected_count', 'avg_quality', 'ratio',
+        ]
+        if df.empty:
+            return pd.DataFrame(columns=empty_cols)
+
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+
+        # Choose adaptive bin size based on the selected time range
+        start_dt = pd.to_datetime(start)
+        end_dt = pd.to_datetime(end)
+        duration = end_dt - start_dt
+
+        if duration <= pd.Timedelta('3 days'):
+            bin_freq = '1h'
+        elif duration <= pd.Timedelta('30 days'):
+            bin_freq = '6h'
+        else:
+            bin_freq = '1D'
+
+        bin_minutes = pd.Timedelta(bin_freq).total_seconds() / 60
+
+        df['time_bin'] = df['timestamp'].dt.floor(bin_freq)
+
+        stats = df.groupby(['time_bin', 'sensor_id', 'location']).agg(
+            received_count=('timestamp', 'count'),
+            avg_quality=('connection_quality', 'mean'),
+        ).reset_index()
+
+        # Build a lookup: sensor_id -> frequency_minutes from config
+        sensor_freq_map = {
+            s['id']: s.get('frequency_minutes', config.EXPECTED_FREQ_MINUTES)
+            for s in config.SENSOR_CONFIG.get('sensors', [])
+        }
+
+        def _expected(sid):
+            freq = sensor_freq_map.get(sid, config.EXPECTED_FREQ_MINUTES)
+            return max(1, int(bin_minutes / freq))
+
+        stats['expected_count'] = stats['sensor_id'].apply(_expected)
+        stats['ratio'] = (
+            stats['received_count'] / stats['expected_count']
+        ).clip(upper=1.0)
+
+        return stats
+    finally:
+        conn.close()
+
+
+def check_sensor_gaps(gap_threshold_hours: float = 3.0) -> List[dict]:
+    """Check for sensors that had a signal gap >= threshold in the last 24 h.
+
+    Also reports sensors defined in the config that sent no messages at all
+    during the last 24 hours.
+
+    Args:
+        gap_threshold_hours: Minimum gap duration (hours) that triggers a warning.
+
+    Returns:
+        List of dicts with keys sensor_id, location, max_gap_hours for each
+        sensor that exceeded the threshold.
+    """
+    now = datetime.utcnow()
+    window_start = now - timedelta(hours=24)
+
+    start_str = window_start.strftime('%Y-%m-%d %H:%M:%S')
+    end_str = now.strftime('%Y-%m-%d %H:%M:%S')
+
+    conn = get_connection()
+    query = """
+        SELECT sensor_id, location, timestamp
+        FROM measurements
+        WHERE timestamp >= ? AND timestamp <= ?
+        ORDER BY sensor_id, location, timestamp
+    """
+
+    try:
+        df = pd.read_sql_query(query, conn, params=[start_str, end_str])
+
+        if not df.empty:
+            df['timestamp'] = pd.to_datetime(df['timestamp'])
+
+        issues = []
+        seen_sensors = set()
+
+        if not df.empty:
+            for (sensor_id, location), group in df.groupby(['sensor_id', 'location']):
+                seen_sensors.add(sensor_id)
+                timestamps = group['timestamp'].sort_values().tolist()
+
+                # Include the window boundaries for gap calculation
+                all_points = (
+                    [pd.Timestamp(window_start)] + timestamps + [pd.Timestamp(now)]
+                )
+
+                max_gap = max(
+                    (all_points[i + 1] - all_points[i]).total_seconds() / 3600
+                    for i in range(len(all_points) - 1)
+                )
+
+                if max_gap >= gap_threshold_hours:
+                    issues.append({
+                        'sensor_id': sensor_id,
+                        'location': location,
+                        'max_gap_hours': round(max_gap, 1),
+                    })
+
+        # Sensors in config that sent nothing in the last 24 h
+        for sensor in config.SENSOR_CONFIG.get('sensors', []):
+            sid = sensor['id']
+            if sid not in seen_sensors:
+                issues.append({
+                    'sensor_id': sid,
+                    'location': sensor.get('location', 'unknown'),
+                    'max_gap_hours': 24.0,
+                })
+
+        return issues
     finally:
         conn.close()
