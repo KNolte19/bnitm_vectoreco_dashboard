@@ -1,0 +1,30 @@
+# Sensor configuration for VectorEco Dashboard
+#
+# Define all sensors, their expected message frequency, and the maximum
+# allowed gap before a sensor is considered to have a connectivity problem.
+#
+# Fields:
+#   id                 : Integer sensor ID (must match the sensor_id in the database)
+#   name               : Human-readable sensor name
+#   location           : Location label (must match the location field in the database)
+#   frequency_minutes  : Expected interval between messages in minutes
+#   max_gap_hours      : Maximum allowed gap (in hours) before triggering a warning
+
+sensors:
+  - id: 1
+    name: "Sensor 1"
+    location: "Location A"
+    frequency_minutes: 5
+    max_gap_hours: 3
+
+  - id: 2
+    name: "Sensor 2"
+    location: "Location A"
+    frequency_minutes: 5
+    max_gap_hours: 3
+
+  - id: 3
+    name: "Sensor 3"
+    location: "Location B"
+    frequency_minutes: 5
+    max_gap_hours: 3

@@ -1,8 +1,12 @@
 """Dash application callbacks."""
-from dash import Input, Output
+from dash import Input, Output, html
 from datetime import datetime
 from app.data import repository
-from app.dashapp.plots import create_timeseries_plot, create_gap_bar_chart
+from app.dashapp.plots import (
+    create_timeseries_plot,
+    create_gap_bar_chart,
+    create_connectivity_bar_chart,
+)
 
 
 def register_callbacks(app):
@@ -50,10 +54,12 @@ def register_callbacks(app):
     
     @app.callback(
         [
+            Output('warning-banner', 'children'),
+            Output('warning-banner', 'style'),
             Output('timeseries-plot', 'figure'),
             Output('latest-status-table', 'data'),
             Output('latest-status-table', 'columns'),
-            Output('gap-chart', 'figure'),
+            Output('connectivity-chart', 'figure'),
             Output('gap-stats-table', 'data'),
             Output('gap-stats-table', 'columns'),
         ],
@@ -83,7 +89,35 @@ def register_callbacks(app):
         start_str = start_dt.strftime('%Y-%m-%d %H:%M:%S')
         end_str = end_dt.strftime('%Y-%m-%d %H:%M:%S')
         
-        # Fetch measurements for time series
+        # ── Warning banner: check last 24 h for long gaps ──────────────────
+        gap_issues = repository.check_sensor_gaps(gap_threshold_hours=3.0)
+        if gap_issues:
+            issue_texts = [
+                f"Sensor {i['sensor_id']} ({i['location']}): {i['max_gap_hours']} h without signal"
+                for i in gap_issues
+            ]
+            warning_children = [
+                html.Strong("⚠ Connectivity warning: "),
+                html.Span(
+                    "The following sensors had no signal for ≥ 3 hours in the last 24 hours: "
+                    + "; ".join(issue_texts)
+                ),
+            ]
+            warning_style = {
+                'display': 'block',
+                'backgroundColor': '#fff3cd',
+                'border': '1px solid #ffc107',
+                'borderRadius': 6,
+                'padding': '12px 20px',
+                'marginBottom': 20,
+                'color': '#856404',
+                'fontSize': 14,
+            }
+        else:
+            warning_children = []
+            warning_style = {'display': 'none'}
+
+        # ── Fetch measurements for time series ─────────────────────────────
         df_measurements = repository.fetch_measurements(
             start=start_str,
             end=end_str,
@@ -115,17 +149,22 @@ def register_callbacks(app):
             latest_data = []
             latest_columns = []
         
-        # Fetch gap statistics
+        # ── Connectivity bar chart ─────────────────────────────────────────
+        df_connectivity = repository.fetch_connectivity_stats(
+            start=start_str,
+            end=end_str,
+            locations=locations if locations else None,
+            sensor_ids=sensors if sensors else None,
+        )
+        connectivity_fig = create_connectivity_bar_chart(df_connectivity)
+
+        # ── Gap statistics table ──────────────────────────────────────────
         df_gaps = repository.fetch_gap_stats(
             start=start_str,
             end=end_str,
             expected_freq='5min'
         )
-        
-        # Create gap bar chart
-        gap_fig = create_gap_bar_chart(df_gaps)
-        
-        # Format gap stats for table
+
         if not df_gaps.empty:
             gap_data = df_gaps.to_dict('records')
             gap_columns = [{'name': col, 'id': col} for col in df_gaps.columns]
@@ -134,10 +173,12 @@ def register_callbacks(app):
             gap_columns = []
         
         return (
+            warning_children,
+            warning_style,
             timeseries_fig,
             latest_data,
             latest_columns,
-            gap_fig,
+            connectivity_fig,
             gap_data,
-            gap_columns
+            gap_columns,
         )
