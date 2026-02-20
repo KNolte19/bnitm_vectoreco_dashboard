@@ -7,6 +7,7 @@ from app.dashapp.plots import (
     create_gap_bar_chart,
     create_connectivity_bar_chart,
 )
+from app.ingestion.parser import TREATMENT_LABELS
 
 
 def register_callbacks(app):
@@ -20,7 +21,7 @@ def register_callbacks(app):
         [
             Output('location-dropdown', 'options'),
             Output('sensor-dropdown', 'options'),
-            Output('container-dropdown', 'options'),
+            Output('treatment-dropdown', 'options'),
         ],
         [
             Input('date-range-picker', 'start_date'),  # Triggers on initial load
@@ -29,7 +30,7 @@ def register_callbacks(app):
         ]
     )
     def update_filter_options(_, selected_locations, selected_sensors):
-        """Update available options for sensor and container dropdowns based on location selection."""
+        """Update available options for sensor and treatment dropdowns based on location selection."""
         # Always show all locations
         locations = repository.get_all_locations()
         location_options = [{'label': loc, 'value': loc} for loc in locations]
@@ -41,16 +42,19 @@ def register_callbacks(app):
             available_sensors = repository.get_all_sensor_ids()
         sensor_options = [{'label': f'Sensor {s}', 'value': s} for s in available_sensors]
         
-        # Filter containers based on selected locations and sensors
+        # Filter treatments based on selected locations and sensors
         if selected_locations or selected_sensors:
-            available_containers = repository.get_containers_by_location_and_sensor(
+            available_treatments = repository.get_treatments_by_location_and_sensor(
                 selected_locations, selected_sensors
             )
         else:
-            available_containers = repository.get_all_container_ids()
-        container_options = [{'label': f'Container {c}', 'value': c} for c in available_containers]
+            available_treatments = repository.get_all_treatment_ids()
+        treatment_options = [
+            {'label': TREATMENT_LABELS.get(t, f'Treatment {t}'), 'value': t}
+            for t in available_treatments
+        ]
         
-        return location_options, sensor_options, container_options
+        return location_options, sensor_options, treatment_options
     
     @app.callback(
         [
@@ -68,12 +72,11 @@ def register_callbacks(app):
             Input('date-range-picker', 'end_date'),
             Input('location-dropdown', 'value'),
             Input('sensor-dropdown', 'value'),
-            Input('container-dropdown', 'value'),
-            Input('temperature-type-checklist', 'value'),
-            Input('separate-lines-checklist', 'value'),
+            Input('treatment-dropdown', 'value'),
+            Input('temp-mode-radio', 'value'),
         ]
     )
-    def update_dashboard(start_date, end_date, locations, sensors, containers, temp_types, separate_lines):
+    def update_dashboard(start_date, end_date, locations, sensors, treatments, temp_mode):
         """Update all dashboard components based on filters."""
         # Parse dates and add time component (full day range)
         if start_date:
@@ -123,25 +126,34 @@ def register_callbacks(app):
             end=end_str,
             locations=locations if locations else None,
             sensor_ids=sensors if sensors else None,
-            container_ids=containers if containers else None,
+            treatment_ids=treatments if treatments else None,
         )
         
         # Create time series plot
-        separate = 'separate' in separate_lines if separate_lines else False
-        timeseries_fig = create_timeseries_plot(df_measurements, temp_types, separate)
+        timeseries_fig = create_timeseries_plot(
+            df_measurements,
+            treatment_ids=treatments if treatments else None,
+            temp_mode=temp_mode or 'absolute',
+        )
         
         # Fetch latest status
-        df_latest = repository.fetch_latest_per_location_container()
+        df_latest = repository.fetch_latest_per_location_treatment()
         
         # Format latest status for table
         if not df_latest.empty:
             df_latest_display = df_latest.copy()
-            df_latest_display['timestamp'] = df_latest_display['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
-            df_latest_display['received_at'] = df_latest_display['received_at'].dt.strftime('%Y-%m-%d %H:%M:%S')
+            df_latest_display['window_start'] = df_latest_display['window_start'].dt.strftime('%Y-%m-%d %H:%M:%S')
+            df_latest_display['window_end'] = df_latest_display['window_end'].dt.strftime('%Y-%m-%d %H:%M:%S')
             
             # Round temperatures
-            df_latest_display['temperature_water'] = df_latest_display['temperature_water'].round(2)
-            df_latest_display['temperature_air'] = df_latest_display['temperature_air'].round(2)
+            df_latest_display['control_temp'] = df_latest_display['control_temp'].round(2)
+            df_latest_display['treatment_temp'] = df_latest_display['treatment_temp'].round(2)
+            df_latest_display['connection_quality'] = df_latest_display['connection_quality'].round(3)
+            
+            # Add treatment label column
+            df_latest_display['treatment_label'] = df_latest_display['treatment_id'].map(
+                lambda t: TREATMENT_LABELS.get(t, f'Treatment {t}')
+            )
             
             latest_data = df_latest_display.to_dict('records')
             latest_columns = [{'name': col, 'id': col} for col in df_latest_display.columns]
@@ -162,7 +174,7 @@ def register_callbacks(app):
         df_gaps = repository.fetch_gap_stats(
             start=start_str,
             end=end_str,
-            expected_freq='5min'
+            expected_freq='15min'
         )
 
         if not df_gaps.empty:

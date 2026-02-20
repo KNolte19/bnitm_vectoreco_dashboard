@@ -15,22 +15,26 @@ def dicts_to_dataframe(records: List[Dict]) -> pd.DataFrame:
     if not records:
         # Return empty DataFrame with correct schema
         return pd.DataFrame(columns=[
-            'sensor_id', 'container_id', 'location',
-            'timestamp', 'received_at',
-            'temperature_water', 'temperature_air',
-            'connection_quality'
+            'sensor_id', 'treatment_id', 'location',
+            'window_start', 'window_end', 'n_observations',
+            'control_temp', 'treatment_temp',
+            'received_packets', 'expected_packets',
+            'connection_quality',
         ])
     
     df = pd.DataFrame(records)
     
     # Ensure correct dtypes
     df['sensor_id'] = df['sensor_id'].astype(int)
-    df['container_id'] = df['container_id'].astype(int)
+    df['treatment_id'] = df['treatment_id'].astype(int)
     df['location'] = df['location'].astype(str)
-    df['timestamp'] = pd.to_datetime(df['timestamp'])
-    df['received_at'] = pd.to_datetime(df['received_at'])
-    df['temperature_water'] = df['temperature_water'].astype(float)
-    df['temperature_air'] = df['temperature_air'].astype(float)
-    df['connection_quality'] = df['connection_quality'].astype(int)
+    df['window_start'] = pd.to_datetime(df['window_start'])
+    df['window_end'] = pd.to_datetime(df['window_end'])
+    df['n_observations'] = df['n_observations'].astype(int)
+    df['control_temp'] = df['control_temp'].astype(float)
+    df['treatment_temp'] = df['treatment_temp'].astype(float)
+    df['received_packets'] = df['received_packets'].astype(int)
+    df['expected_packets'] = df['expected_packets'].astype(int)
+    df['connection_quality'] = df['connection_quality'].astype(float)
     
     return df

@@ -63,15 +63,15 @@ def ingest_folder(
     
     logger.info(f"Found {stats.found} JSON files to process")
     
-    # Parse all files
+    # Parse all files – each file may yield multiple records (one per treatment)
     valid_records = []
     files_to_archive = []
     
     for json_file in json_files:
-        record, error = parse_json_file(str(json_file))
+        records, error = parse_json_file(str(json_file))
         
-        if record:
-            valid_records.append(record)
+        if records is not None:
+            valid_records.extend(records)
             files_to_archive.append(json_file)
             stats.parsed += 1
         else:
@@ -146,24 +146,28 @@ def bulk_insert_measurements(records: List[Dict]) -> Tuple[int, int]:
         
         insert_sql = """
             INSERT OR IGNORE INTO measurements (
-                sensor_id, container_id, location,
-                timestamp, received_at,
-                temperature_water, temperature_air,
+                sensor_id, treatment_id, location,
+                window_start, window_end, n_observations,
+                control_temp, treatment_temp,
+                received_packets, expected_packets,
                 connection_quality
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         
         # Convert DataFrame to list of tuples
         records_tuples = [
             (
                 row['sensor_id'],
-                row['container_id'],
+                row['treatment_id'],
                 row['location'],
-                row['timestamp'].strftime('%Y-%m-%d %H:%M:%S'),
-                row['received_at'].strftime('%Y-%m-%d %H:%M:%S'),
-                row['temperature_water'],
-                row['temperature_air'],
-                row['connection_quality']
+                row['window_start'].strftime('%Y-%m-%d %H:%M:%S'),
+                row['window_end'].strftime('%Y-%m-%d %H:%M:%S'),
+                row['n_observations'],
+                row['control_temp'],
+                row['treatment_temp'],
+                row['received_packets'],
+                row['expected_packets'],
+                row['connection_quality'],
             )
             for _, row in df.iterrows()
         ]

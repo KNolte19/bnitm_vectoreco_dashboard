@@ -30,6 +30,8 @@ def test_duplicate_handling():
         conn.close()
         
         # Copy test fixtures to inbox
+        # valid_1.json and valid_2.json: different windows (6 unique records)
+        # duplicate.json: same window as valid_1.json (3 duplicates)
         fixtures_dir = Path(__file__).parent / 'fixtures'
         shutil.copy(fixtures_dir / 'valid_1.json', inbox / 'valid_1.json')
         shutil.copy(fixtures_dir / 'valid_2.json', inbox / 'valid_2.json')
@@ -49,8 +51,9 @@ def test_duplicate_handling():
             
             assert stats1.found == 3, "Should find 3 files"
             assert stats1.parsed == 3, "Should parse 3 files"
-            assert stats1.inserted == 2, "Should insert 2 unique records"
-            assert stats1.duplicates == 1, "Should detect 1 duplicate"
+            # valid_1 (3 records) + valid_2 (3 records) + duplicate (3 records, all dupes of valid_1)
+            assert stats1.inserted == 6, "Should insert 6 unique records"
+            assert stats1.duplicates == 3, "Should detect 3 duplicates"
             
             # Verify database content
             conn = get_connection(str(db_path))
@@ -59,7 +62,7 @@ def test_duplicate_handling():
             count = cursor.fetchone()[0]
             conn.close()
             
-            assert count == 2, f"Database should have 2 records, found {count}"
+            assert count == 6, f"Database should have 6 records, found {count}"
             
             print("✓ test_duplicate_handling passed")
             
@@ -82,7 +85,7 @@ def test_idempotency():
         create_tables(conn)
         conn.close()
         
-        # Copy test fixture
+        # Copy test fixture (valid_1.json has 3 treatments → 3 records)
         fixtures_dir = Path(__file__).parent / 'fixtures'
         shutil.copy(fixtures_dir / 'valid_1.json', inbox / 'valid_1.json')
         
@@ -97,7 +100,7 @@ def test_idempotency():
                 delete_after=False
             )
             
-            assert stats1.inserted == 1, "First run should insert 1 record"
+            assert stats1.inserted == 3, "First run should insert 3 records"
             
             # Copy the same file again
             shutil.copy(fixtures_dir / 'valid_1.json', inbox / 'valid_1_again.json')
@@ -111,16 +114,16 @@ def test_idempotency():
             
             assert stats2.found == 1, "Should find 1 file in second run"
             assert stats2.inserted == 0, "Second run should insert 0 records"
-            assert stats2.duplicates == 1, "Second run should detect 1 duplicate"
+            assert stats2.duplicates == 3, "Second run should detect 3 duplicates"
             
-            # Verify database still has only 1 record
+            # Verify database still has only 3 records
             conn = get_connection(str(db_path))
             cursor = conn.cursor()
             cursor.execute("SELECT COUNT(*) FROM measurements")
             count = cursor.fetchone()[0]
             conn.close()
             
-            assert count == 1, f"Database should still have 1 record, found {count}"
+            assert count == 3, f"Database should still have 3 records, found {count}"
             
             print("✓ test_idempotency passed")
             

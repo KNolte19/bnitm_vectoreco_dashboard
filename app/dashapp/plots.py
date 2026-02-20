@@ -2,16 +2,25 @@
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from app.ingestion.parser import TREATMENT_LABELS, TREATMENT_DELTA_RANGES
+
+# Colours per treatment
+TREATMENT_COLORS = {
+    1: '#e67e22',   # orange  (+1.5°C)
+    2: '#e74c3c',   # red     (+3°C)
+    3: '#8e44ad',   # purple  (+4.5°C)
+}
+CONTROL_COLOR = '#3498db'  # blue
 
 
-def _quality_to_color(quality: float, max_quality: float = 4.0) -> str:
-    """Map a connection quality value (0–4) to an RGB color string.
+def _quality_to_color(quality: float, max_quality: float = 1.0) -> str:
+    """Map a connection quality value (0–1) to an RGB color string.
 
-    0 → red, max_quality → green, intermediate values are interpolated.
+    0 → red, 1 → green, intermediate values are interpolated.
 
     Args:
-        quality: Connection quality value.
-        max_quality: Maximum quality value (default 4).
+        quality: Connection quality value (0.0–1.0).
+        max_quality: Maximum quality value (default 1.0).
 
     Returns:
         CSS-compatible color string, e.g. 'rgb(255,0,0)'.
@@ -24,25 +33,26 @@ def _quality_to_color(quality: float, max_quality: float = 4.0) -> str:
     return f'rgb({r},{g},0)'
 
 
-def create_timeseries_plot(df: pd.DataFrame, temp_types: list = None, separate_by_sensor_container: bool = False) -> go.Figure:
-    """Create an interactive time series plot of temperatures using Plotly.
-    
+def create_timeseries_plot(
+    df: pd.DataFrame,
+    treatment_ids: list = None,
+    temp_mode: str = 'absolute',
+) -> go.Figure:
+    """Create an interactive time series plot of temperatures.
+
     Args:
-        df: DataFrame with timestamp, temperature_water, temperature_air, sensor_id, container_id columns
-        temp_types: List of temperature types to display ('air', 'water'). None means both.
-        separate_by_sensor_container: If True, create separate lines for each sensor/container combination
-        
+        df: DataFrame with window_start, control_temp, treatment_temp,
+            sensor_id, treatment_id columns.
+        treatment_ids: List of treatment IDs to display. None means all.
+        temp_mode: 'absolute' to show raw temperatures, 'delta' to show
+                   (treatment_temp - control_temp) per treatment.
+
     Returns:
         Plotly Figure object
     """
     fig = go.Figure()
-    
-    # Default to showing both if not specified
-    if temp_types is None:
-        temp_types = ['air', 'water']
-    
+
     if df.empty:
-        # Create empty plot with message
         fig.add_annotation(
             text="No data available for selected filters",
             xref="paper", yref="paper",
@@ -55,97 +65,105 @@ def create_timeseries_plot(df: pd.DataFrame, temp_types: list = None, separate_b
             height=400
         )
         return fig
-    
-    if separate_by_sensor_container:
-        # Create separate lines for each sensor/container combination
-        # Define color palettes
-        water_colors = ['#3498db', '#2980b9', '#5dade2', '#1f618d', '#85c1e9', '#21618c']
-        air_colors = ['#e74c3c', '#c0392b', '#ec7063', '#922b21', '#f1948a', '#641e16']
-        
-        # Get unique sensor/container combinations
-        if 'sensor_id' in df.columns and 'container_id' in df.columns:
-            combinations = df[['sensor_id', 'container_id']].drop_duplicates().sort_values(['sensor_id', 'container_id'])
-            
-            water_idx = 0
-            air_idx = 0
-            
-            for _, row in combinations.iterrows():
-                sensor_id = row['sensor_id']
-                container_id = row['container_id']
-                mask = (df['sensor_id'] == sensor_id) & (df['container_id'] == container_id)
-                df_subset = df[mask].sort_values('timestamp')
-                
-                label_prefix = f'S{sensor_id}/C{container_id}'
-                
-                # Add water temperature trace if selected
-                if 'water' in temp_types:
-                    fig.add_trace(go.Scatter(
-                        x=df_subset['timestamp'],
-                        y=df_subset['temperature_water'],
-                        mode='lines',
-                        name=f'{label_prefix} Water',
-                        line=dict(color=water_colors[water_idx % len(water_colors)], width=1.5),
-                        hovertemplate=f'<b>{label_prefix} Water</b><br>Time: %{{x}}<br>Temp: %{{y:.2f}}°C<extra></extra>'
-                    ))
-                    water_idx += 1
-                
-                # Add air temperature trace if selected
-                if 'air' in temp_types:
-                    fig.add_trace(go.Scatter(
-                        x=df_subset['timestamp'],
-                        y=df_subset['temperature_air'],
-                        mode='lines',
-                        name=f'{label_prefix} Air',
-                        line=dict(color=air_colors[air_idx % len(air_colors)], width=1.5, dash='dot'),
-                        hovertemplate=f'<b>{label_prefix} Air</b><br>Time: %{{x}}<br>Temp: %{{y:.2f}}°C<extra></extra>'
-                    ))
-                    air_idx += 1
-        else:
-            # Fallback if columns are missing
-            if 'water' in temp_types:
+
+    available_treatments = sorted(df['treatment_id'].unique())
+    if treatment_ids:
+        available_treatments = [t for t in available_treatments if t in treatment_ids]
+
+    if temp_mode == 'delta':
+        # Plot temperature delta (treatment - control) per treatment
+        for tid in available_treatments:
+            subset = df[df['treatment_id'] == tid].sort_values('window_start').copy()
+            subset['delta'] = subset['treatment_temp'] - subset['control_temp']
+            label = TREATMENT_LABELS.get(tid, f"Treatment {tid}")
+            color = TREATMENT_COLORS.get(tid, '#95a5a6')
+
+            fig.add_trace(go.Scatter(
+                x=subset['window_start'],
+                y=subset['delta'],
+                mode='lines',
+                name=f'{label}',
+                line=dict(color=color, width=2),
+                hovertemplate=(
+                    f'<b>{label}</b><br>'
+                    'Time: %{x}<br>'
+                    'ΔT: %{y:.2f}°C<extra></extra>'
+                )
+            ))
+
+        # Add target range shading for each treatment
+        for tid in available_treatments:
+            if tid in TREATMENT_DELTA_RANGES:
+                lo, hi = TREATMENT_DELTA_RANGES[tid]
+                color = TREATMENT_COLORS.get(tid, '#95a5a6')
+                label = TREATMENT_LABELS.get(tid, f"Treatment {tid}")
+                # Upper bound (invisible line)
                 fig.add_trace(go.Scatter(
-                    x=df['timestamp'],
-                    y=df['temperature_water'],
+                    x=[df['window_start'].min(), df['window_start'].max()],
+                    y=[hi, hi],
                     mode='lines',
-                    name='Water Temperature',
-                    line=dict(color='#3498db', width=2),
+                    line=dict(color=color, width=1, dash='dot'),
+                    showlegend=False,
+                    hoverinfo='skip',
                 ))
-            if 'air' in temp_types:
+                # Lower bound with fill
                 fig.add_trace(go.Scatter(
-                    x=df['timestamp'],
-                    y=df['temperature_air'],
+                    x=[df['window_start'].min(), df['window_start'].max()],
+                    y=[lo, lo],
                     mode='lines',
-                    name='Air Temperature',
-                    line=dict(color='#e74c3c', width=2),
+                    fill='tonexty',
+                    fillcolor=color.replace(')', ', 0.1)').replace('rgb', 'rgba'),
+                    line=dict(color=color, width=1, dash='dot'),
+                    name=f'{label} target range',
+                    hoverinfo='skip',
                 ))
+
+        y_title = 'Temperature Difference (°C)'
+        title_text = 'Treatment Temperature Difference from Control'
+
     else:
-        # Combined view: aggregate all data
-        # Add water temperature trace if selected
-        if 'water' in temp_types:
+        # Absolute mode: show control temp + treatment temps
+        # Control temperature – use treatment 1's control as representative
+        # (all treatments share the same control window, so we de-duplicate by window)
+        df_control = (
+            df.sort_values('window_start')
+              .drop_duplicates(subset=['sensor_id', 'window_start'])
+        )
+        if not df_control.empty:
             fig.add_trace(go.Scatter(
-                x=df['timestamp'],
-                y=df['temperature_water'],
+                x=df_control['window_start'],
+                y=df_control['control_temp'],
                 mode='lines',
-                name='Water Temperature',
-                line=dict(color='#3498db', width=2),
-                hovertemplate='<b>Water</b><br>Time: %{x}<br>Temp: %{y:.2f}°C<extra></extra>'
+                name='Control',
+                line=dict(color=CONTROL_COLOR, width=2),
+                hovertemplate='<b>Control</b><br>Time: %{x}<br>Temp: %{y:.2f}°C<extra></extra>'
             ))
-        
-        # Add air temperature trace if selected
-        if 'air' in temp_types:
+
+        # Treatment temperatures
+        for tid in available_treatments:
+            subset = df[df['treatment_id'] == tid].sort_values('window_start')
+            label = TREATMENT_LABELS.get(tid, f"Treatment {tid}")
+            color = TREATMENT_COLORS.get(tid, '#95a5a6')
+
             fig.add_trace(go.Scatter(
-                x=df['timestamp'],
-                y=df['temperature_air'],
+                x=subset['window_start'],
+                y=subset['treatment_temp'],
                 mode='lines',
-                name='Air Temperature',
-                line=dict(color='#e74c3c', width=2),
-                hovertemplate='<b>Air</b><br>Time: %{x}<br>Temp: %{y:.2f}°C<extra></extra>'
+                name=label,
+                line=dict(color=color, width=2),
+                hovertemplate=(
+                    f'<b>{label}</b><br>'
+                    'Time: %{x}<br>'
+                    'Temp: %{y:.2f}°C<extra></extra>'
+                )
             ))
-    
-    # Update layout
+
+        y_title = 'Temperature (°C)'
+        title_text = 'Absolute Temperature by Treatment'
+
     fig.update_layout(
         title=dict(
-            text='Temperature Time Series',
+            text=title_text,
             font=dict(size=18, color='#2c3e50'),
             x=0.5,
             xanchor='center'
@@ -157,7 +175,7 @@ def create_timeseries_plot(df: pd.DataFrame, temp_types: list = None, separate_b
             zeroline=False
         ),
         yaxis=dict(
-            title='Temperature (°C)',
+            title=y_title,
             showgrid=True,
             gridcolor='#ecf0f1',
             zeroline=False
@@ -175,7 +193,7 @@ def create_timeseries_plot(df: pd.DataFrame, temp_types: list = None, separate_b
         height=500,
         margin=dict(l=60, r=150, t=80, b=60)
     )
-    
+
     return fig
 
 
@@ -183,7 +201,7 @@ def create_gap_bar_chart(df: pd.DataFrame) -> go.Figure:
     """Create an interactive bar chart of missing measurement counts using Plotly.
     
     Args:
-        df: DataFrame with sensor_id, container_id, missing_count columns
+        df: DataFrame with sensor_id, treatment_id, missing_count columns
         
     Returns:
         Plotly Figure object
@@ -223,10 +241,10 @@ def create_gap_bar_chart(df: pd.DataFrame) -> go.Figure:
         )
         return fig
     
-    # Create label for each sensor/container combination
+    # Create label for each sensor/treatment combination
     df_with_gaps['label'] = (
-        'S' + df_with_gaps['sensor_id'].astype(str) + 
-        '/C' + df_with_gaps['container_id'].astype(str)
+        'S' + df_with_gaps['sensor_id'].astype(str) +
+        '/T' + df_with_gaps['treatment_id'].astype(str)
     )
     
     # Create bar chart
@@ -243,13 +261,13 @@ def create_gap_bar_chart(df: pd.DataFrame) -> go.Figure:
     # Update layout
     fig.update_layout(
         title=dict(
-            text='Missing Measurement Intervals by Sensor/Container',
+            text='Missing Measurement Intervals by Sensor/Treatment',
             font=dict(size=18, color='#2c3e50'),
             x=0.5,
             xanchor='center'
         ),
         xaxis=dict(
-            title='Sensor/Container',
+            title='Sensor/Treatment',
             showgrid=False,
             tickangle=-45
         ),
@@ -275,7 +293,7 @@ def create_connectivity_bar_chart(df: pd.DataFrame) -> go.Figure:
     Each bar represents one time bin for one sensor and shows:
     - Height : ratio of received packets to expected packets (0–1)
     - Color  : average connection quality for that bin, mapped from
-               red (quality = 0) to green (quality = 4)
+               red (quality = 0) to green (quality = 1)
 
     Args:
         df: DataFrame returned by repository.fetch_connectivity_stats with
@@ -316,7 +334,7 @@ def create_connectivity_bar_chart(df: pd.DataFrame) -> go.Figure:
                 f"Time: {row.time_bin}<br>"
                 f"Received: {row.received_count} / {row.expected_count} expected<br>"
                 f"Ratio: {row.ratio:.0%}<br>"
-                f"Avg quality: {row.avg_quality:.1f}"
+                f"Avg quality: {row.avg_quality:.2f}"
             )
             for row in subset.itertuples()
         ]
@@ -336,13 +354,13 @@ def create_connectivity_bar_chart(df: pd.DataFrame) -> go.Figure:
         mode='markers',
         marker=dict(
             colorscale=[[0, 'rgb(255,0,0)'], [1, 'rgb(0,255,0)']],
-            cmin=0, cmax=4,
+            cmin=0, cmax=1,
             color=[0],
             colorbar=dict(
                 title='Avg<br>Quality',
                 thickness=15,
                 len=0.7,
-                tickvals=[0, 1, 2, 3, 4],
+                tickvals=[0, 0.25, 0.5, 0.75, 1.0],
             ),
             showscale=True,
         ),

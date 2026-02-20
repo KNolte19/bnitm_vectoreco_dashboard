@@ -67,40 +67,27 @@ def create_layout():
                     ),
                 ], style={'marginBottom': 15}),
                 
-                # Container filter
+                # Treatment filter
                 html.Div([
-                    html.Label('Container IDs:', style={'fontWeight': 'bold', 'display': 'block', 'marginBottom': 5}),
+                    html.Label('Treatments:', style={'fontWeight': 'bold', 'display': 'block', 'marginBottom': 5}),
                     dcc.Dropdown(
-                        id='container-dropdown',
+                        id='treatment-dropdown',
                         options=[],
                         multi=True,
-                        placeholder='Select containers (all if empty)',
+                        placeholder='Select treatments (all if empty)',
                     ),
                 ], style={'marginBottom': 15}),
                 
-                # Temperature type selection
+                # Temperature view selection
                 html.Div([
-                    html.Label('Temperature Types:', style={'fontWeight': 'bold', 'display': 'block', 'marginBottom': 5}),
-                    dcc.Checklist(
-                        id='temperature-type-checklist',
+                    html.Label('Temperature View:', style={'fontWeight': 'bold', 'display': 'block', 'marginBottom': 5}),
+                    dcc.RadioItems(
+                        id='temp-mode-radio',
                         options=[
-                            {'label': ' Air Temperature', 'value': 'air'},
-                            {'label': ' Water Temperature', 'value': 'water'}
+                            {'label': ' Absolute Temperature', 'value': 'absolute'},
+                            {'label': ' Temperature Difference (ΔT from Control)', 'value': 'delta'},
                         ],
-                        value=['air', 'water'],  # Both selected by default
-                        style={'marginTop': 5}
-                    ),
-                ], style={'marginBottom': 15}),
-                
-                # Separate by sensor/container option
-                html.Div([
-                    html.Label('Plot Options:', style={'fontWeight': 'bold', 'display': 'block', 'marginBottom': 5}),
-                    dcc.Checklist(
-                        id='separate-lines-checklist',
-                        options=[
-                            {'label': ' Separate by Sensor and Container', 'value': 'separate'}
-                        ],
-                        value=[],  # Not separated by default
+                        value='absolute',
                         style={'marginTop': 5}
                     ),
                 ], style={'marginBottom': 15}),

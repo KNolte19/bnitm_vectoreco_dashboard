@@ -19,9 +19,9 @@ TIMEZONE = 'UTC'
 # Default expected measurement frequency (used as fallback if not in sensor config)
 EXPECTED_FREQ_MINUTES = 5
 
-# Connection quality valid range
-MIN_CONNECTION_QUALITY = 1
-MAX_CONNECTION_QUALITY = 4
+# Connection quality valid range (float 0.0–1.0)
+MIN_CONNECTION_QUALITY = 0.0
+MAX_CONNECTION_QUALITY = 1.0
 
 # Flask configuration
 SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')

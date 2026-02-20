@@ -7,25 +7,28 @@ DDL_CREATE_TABLE = """
 CREATE TABLE IF NOT EXISTS measurements (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     sensor_id INTEGER NOT NULL,
-    container_id INTEGER NOT NULL,
+    treatment_id INTEGER NOT NULL,
     location TEXT NOT NULL,
-    timestamp DATETIME NOT NULL,
-    received_at DATETIME NOT NULL,
-    temperature_water REAL NOT NULL,
-    temperature_air REAL NOT NULL,
-    connection_quality INTEGER NOT NULL
+    window_start DATETIME NOT NULL,
+    window_end DATETIME NOT NULL,
+    n_observations INTEGER NOT NULL,
+    control_temp REAL NOT NULL,
+    treatment_temp REAL NOT NULL,
+    received_packets INTEGER NOT NULL,
+    expected_packets INTEGER NOT NULL,
+    connection_quality REAL NOT NULL
 )
 """
 
 DDL_CREATE_UNIQUE_INDEX = """
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_measurement 
-ON measurements(sensor_id, container_id, timestamp)
+ON measurements(sensor_id, treatment_id, window_start)
 """
 
 DDL_CREATE_INDEXES = [
-    "CREATE INDEX IF NOT EXISTS idx_timestamp ON measurements(timestamp)",
+    "CREATE INDEX IF NOT EXISTS idx_window_start ON measurements(window_start)",
     "CREATE INDEX IF NOT EXISTS idx_location ON measurements(location)",
-    "CREATE INDEX IF NOT EXISTS idx_sensor_container ON measurements(sensor_id, container_id)",
+    "CREATE INDEX IF NOT EXISTS idx_sensor_treatment ON measurements(sensor_id, treatment_id)",
 ]
 
 
