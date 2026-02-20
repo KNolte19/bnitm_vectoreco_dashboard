@@ -1,9 +1,15 @@
 {
-    "sensor_id": 3,
-    "container_id": 301,
-    "location": "Lab Station 3",
-    "timestamp": "2024-06-01T12:15:00Z",
-    "received_at": "2024-06-01T12:15:05Z",
-    "temperature_air": 24.5,
-    "connection_quality": 2
+  "site_id": 1,
+  "window_start": "2026-01-01T00:45:00",
+  "n_observations": 15,
+  "treatments": [
+    {
+      "treatment_id": 1,
+      "mean_control_temp": 22.0,
+      "mean_treatment_temp": 23.5,
+      "received_packets": 15,
+      "expected_packets": 15,
+      "connection_quality": 1.0
+    }
+  ]
 }

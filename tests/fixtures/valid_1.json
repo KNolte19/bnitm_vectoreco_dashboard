@@ -1,10 +1,32 @@
 {
-    "sensor_id": 1,
-    "container_id": 101,
-    "location": "Renke Garden 1",
-    "timestamp": "2024-06-01T12:00:00Z",
-    "received_at": "2024-06-01T12:00:05Z",
-    "temperature_water": 22.5,
-    "temperature_air": 25.0,
-    "connection_quality": 4
+  "site_id": 1,
+  "window_start": "2026-01-01T00:00:00",
+  "window_end": "2026-01-01T00:15:00",
+  "n_observations": 15,
+  "treatments": [
+    {
+      "treatment_id": 1,
+      "mean_control_temp": 22.0,
+      "mean_treatment_temp": 23.5,
+      "received_packets": 15,
+      "expected_packets": 15,
+      "connection_quality": 1.0
+    },
+    {
+      "treatment_id": 2,
+      "mean_control_temp": 22.0,
+      "mean_treatment_temp": 25.0,
+      "received_packets": 15,
+      "expected_packets": 15,
+      "connection_quality": 1.0
+    },
+    {
+      "treatment_id": 3,
+      "mean_control_temp": 22.0,
+      "mean_treatment_temp": 26.5,
+      "received_packets": 15,
+      "expected_packets": 15,
+      "connection_quality": 1.0
+    }
+  ]
 }

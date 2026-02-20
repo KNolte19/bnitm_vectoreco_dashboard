@@ -11,22 +11,23 @@ from app.ingestion.parser import parse_json_file
 def test_valid_json():
     """Test parsing a valid JSON file."""
     fixture_path = Path(__file__).parent / 'fixtures' / 'valid_1.json'
-    record, error = parse_json_file(str(fixture_path))
+    records, error = parse_json_file(str(fixture_path))
     
-    assert record is not None, "Valid JSON should parse successfully"
+    assert records is not None, "Valid JSON should parse successfully"
     assert error is None, "Valid JSON should have no error"
-    assert record['sensor_id'] == 1
-    assert record['container_id'] == 101
-    assert record['connection_quality'] == 4
+    assert len(records) == 3, "Should produce 3 records (one per treatment)"
+    assert records[0]['sensor_id'] == 1
+    assert records[0]['treatment_id'] == 1
+    assert records[0]['connection_quality'] == 1.0
     print("✓ test_valid_json passed")
 
 
 def test_invalid_connection_quality():
     """Test that invalid connection quality is rejected."""
     fixture_path = Path(__file__).parent / 'fixtures' / 'invalid_quality.json'
-    record, error = parse_json_file(str(fixture_path))
+    records, error = parse_json_file(str(fixture_path))
     
-    assert record is None, "Invalid quality should be rejected"
+    assert records is None, "Invalid quality should be rejected"
     assert error is not None, "Should have error message"
     assert 'out of valid range' in error.lower()
     print("✓ test_invalid_connection_quality passed")
@@ -35,9 +36,9 @@ def test_invalid_connection_quality():
 def test_missing_required_field():
     """Test that missing required field is rejected."""
     fixture_path = Path(__file__).parent / 'fixtures' / 'missing_field.json'
-    record, error = parse_json_file(str(fixture_path))
+    records, error = parse_json_file(str(fixture_path))
     
-    assert record is None, "Missing field should be rejected"
+    assert records is None, "Missing field should be rejected"
     assert error is not None, "Should have error message"
     assert 'missing' in error.lower() or 'required' in error.lower()
     print("✓ test_missing_required_field passed")
