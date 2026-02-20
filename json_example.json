@@ -1,0 +1,32 @@
+{
+  "site_id": 9,
+  "window_start": "2026-02-20T11:30:00",
+  "window_end": "2026-02-20T11:45:00",
+  "n_observations": 15,
+  "treatments": [
+    {
+      "treatment_id": 3,
+      "mean_control_temp": 26.0,
+      "mean_treatment_temp": 26.38,
+      "received_packets": 20,
+      "expected_packets": 20,
+      "connection_quality": 1.0
+    },
+    {
+      "treatment_id": 1,
+      "mean_control_temp": 26.0,
+      "mean_treatment_temp": 27.0,
+      "received_packets": 24,
+      "expected_packets": 24,
+      "connection_quality": 1.0
+    },
+    {
+      "treatment_id": 2,
+      "mean_control_temp": 26.0,
+      "mean_treatment_temp": 26.0,
+      "received_packets": 16,
+      "expected_packets": 16,
+      "connection_quality": 1.0
+    }
+  ]
+}

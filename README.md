@@ -68,6 +68,13 @@ python scripts/run_server.py
 
 Access the dashboard at: http://localhost:5000/dashboard/
 
+If you want to run the server in your local network, use:
+```bash
+python -m gunicorn wsgi:application --bind 0.0.0.0:8000 --workers 4
+```
+
+Then access the dashboard at: http://<your-ip-address>:8000/dashboard/
+
 ### Data Ingestion
 
 The ingestion system processes JSON files from an inbox directory. Two modes are available:

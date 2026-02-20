@@ -13,18 +13,6 @@
 sensors:
   - id: 1
     name: "Sensor 1"
-    location: "Location A"
-    frequency_minutes: 5
-    max_gap_hours: 3
-
-  - id: 2
-    name: "Sensor 2"
-    location: "Location A"
-    frequency_minutes: 5
-    max_gap_hours: 3
-
-  - id: 3
-    name: "Sensor 3"
-    location: "Location B"
-    frequency_minutes: 5
+    location: "BNITM Garden Testing"
+    frequency_minutes: 15
     max_gap_hours: 3
