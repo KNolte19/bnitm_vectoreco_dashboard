@@ -24,12 +24,13 @@ import shutil
 import sys
 import time
 from pathlib import Path
+import dropbox
 
 # ---------------------------------------------------------------------------
 # Configuration – adjust as needed or override via environment variables
 # ---------------------------------------------------------------------------
-DROPBOX_ACCESS_TOKEN = os.getenv("DROPBOX_ACCESS_TOKEN", "YOUR_DROPBOX_ACCESS_TOKEN_HERE")
-DROPBOX_FOLDER = os.getenv("DROPBOX_FOLDER", "/vectoreco/sensor_data")
+DROPBOX_ACCESS_TOKEN = "UKvwVtpjo1wAAAAAAAAAAXH2Zo1tjaE73xyV14uiUSi7mvZQNSa5qyDrCMziXzHa" 
+DROPBOX_FOLDER = "/ab_uploads/"
 
 # Local paths (relative to repo root when run from the project directory)
 _REPO_ROOT = Path(__file__).parent.parent.absolute()
@@ -80,7 +81,7 @@ def sync_once() -> int:
         )
         return 0
 
-    if DROPBOX_ACCESS_TOKEN == "YOUR_DROPBOX_ACCESS_TOKEN_HERE":
+    if DROPBOX_ACCESS_TOKEN != "UKvwVtpjo1wAAAAAAAAAAXH2Zo1tjaE73xyV14uiUSi7mvZQNSa5qyDrCMziXzHa":
         logger.error(
             "No Dropbox access token configured. "
             "Set the DROPBOX_ACCESS_TOKEN environment variable."

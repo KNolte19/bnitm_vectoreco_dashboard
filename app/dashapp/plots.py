@@ -91,33 +91,6 @@ def create_timeseries_plot(
                 )
             ))
 
-        # Add target range shading for each treatment
-        for tid in available_treatments:
-            if tid in TREATMENT_DELTA_RANGES:
-                lo, hi = TREATMENT_DELTA_RANGES[tid]
-                color = TREATMENT_COLORS.get(tid, '#95a5a6')
-                label = TREATMENT_LABELS.get(tid, f"Treatment {tid}")
-                # Upper bound (invisible line)
-                fig.add_trace(go.Scatter(
-                    x=[df['window_start'].min(), df['window_start'].max()],
-                    y=[hi, hi],
-                    mode='lines',
-                    line=dict(color=color, width=1, dash='dot'),
-                    showlegend=False,
-                    hoverinfo='skip',
-                ))
-                # Lower bound with fill
-                fig.add_trace(go.Scatter(
-                    x=[df['window_start'].min(), df['window_start'].max()],
-                    y=[lo, lo],
-                    mode='lines',
-                    fill='tonexty',
-                    fillcolor=color.replace(')', ', 0.1)').replace('rgb', 'rgba'),
-                    line=dict(color=color, width=1, dash='dot'),
-                    name=f'{label} target range',
-                    hoverinfo='skip',
-                ))
-
         y_title = 'Temperature Difference (°C)'
         title_text = 'Treatment Temperature Difference from Control'
 

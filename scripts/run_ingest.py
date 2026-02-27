@@ -5,6 +5,7 @@ import time
 import logging
 import argparse
 from pathlib import Path
+import sync_dropbox
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.absolute()))
@@ -84,6 +85,8 @@ def main():
         
         try:
             while True:
+                sync_dropbox.sync_once()
+
                 stats = ingest_folder(
                     inbox_path=args.inbox,
                     archive_path=args.archive,
