@@ -1,0 +1,40 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Python byte-code and caches
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+dashboard/
+
+# IDE / OS artefacts
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Test artefacts
+tests/
+
+# Logs
+*.log
+
+# Data that should only exist inside the named volume
+data/inbox/
+data/archive/
+data/*.db
+
+# Secrets / local config
+.env
+
+# Docs
+README.md

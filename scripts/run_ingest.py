@@ -5,11 +5,11 @@ import time
 import logging
 import argparse
 from pathlib import Path
-import sync_dropbox
 
-# Add parent directory to path
+# Add repo root to path so both 'app' and 'scripts' packages are importable
 sys.path.insert(0, str(Path(__file__).parent.parent.absolute()))
 
+import scripts.sync_dropbox as sync_dropbox
 from app.ingestion.ingest import ingest_folder
 from app import config
 

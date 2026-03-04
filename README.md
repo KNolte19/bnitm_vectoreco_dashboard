@@ -23,7 +23,77 @@ This application ingests JSON measurement files from research stations (4 contai
 - **seaborn**: Statistical visualizations (rendered to PNG for Dash)
 - **SQLite**: Persistent storage with uniqueness constraints
 
-## Installation
+## Docker (recommended)
+
+The easiest way to run the dashboard is with Docker Compose. No local Python installation is required.
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) ≥ 20.10
+- [Docker Compose](https://docs.docker.com/compose/install/) ≥ 2.0
+
+### First start
+
+```bash
+docker compose up
+```
+
+This single command will:
+1. Build the Docker image and install all Python dependencies.
+2. Create a named Docker volume (`vectoreco_data`) for the SQLite database, Dropbox sync-state, and file inbox/archive.
+3. Initialise the database schema.
+4. Download **all** JSON files from the configured Dropbox folder.
+5. Ingest the downloaded files into the database.
+6. Start the Gunicorn web server on port **8000**.
+7. Begin polling Dropbox every **15 minutes** for new files and ingesting them automatically.
+
+Access the dashboard at: **http://localhost:8000/dashboard/**
+
+### Stopping and restarting
+
+```bash
+# Stop the container (data volume is preserved)
+docker compose down
+
+# Start again – only new/missing Dropbox files are downloaded and ingested
+docker compose up
+```
+
+Because the Dropbox sync-state file and the database are stored on the persistent volume, a restart only fetches files that have not been seen before.
+
+### Configuration
+
+Create a `.env` file next to `docker-compose.yml` before starting (required for Dropbox sync):
+
+```dotenv
+# Required – Dropbox OAuth2 access token
+DROPBOX_ACCESS_TOKEN=your_token_here
+
+# Optional – Dropbox folder to sync (default: /ab_uploads/)
+DROPBOX_FOLDER=/ab_uploads/
+
+# Recommended – persistent Flask secret key (a random one is generated each
+# startup if omitted, which means sessions won't survive container restarts)
+SECRET_KEY=your-very-secret-key
+```
+
+Then start with:
+
+```bash
+docker compose up
+```
+
+| Environment variable     | Default                        | Description                                          |
+|--------------------------|--------------------------------|------------------------------------------------------|
+| `DROPBOX_ACCESS_TOKEN`   | *(empty – must be set)*        | Dropbox OAuth2 access token                          |
+| `DROPBOX_FOLDER`         | `/ab_uploads/`                 | Remote Dropbox folder to sync                        |
+| `SECRET_KEY`             | *(random, generated at start)* | Flask session secret key                             |
+| `DEBUG`                  | `false`                        | Enable Flask debug mode                              |
+| `POLL_INTERVAL_SECONDS`  | `900`                          | Dropbox sync/ingest interval in seconds (15 minutes) |
+
+---
+
+## Manual Installation
 
 ### Prerequisites
 
