@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - vectoreco_data:/app/data
+    environment:
+      # Paths inside the container (all under the persistent volume)
+      - DB_PATH=/app/data/measurements.db
+      - INBOX_DIR=/app/data/inbox
+      - ARCHIVE_DIR=/app/data/archive
+      - DROPBOX_STATE_FILE=/app/data/.dropbox_synced.json
+      # Override the Dropbox token if needed (falls back to built-in default)
+      - DROPBOX_ACCESS_TOKEN=${DROPBOX_ACCESS_TOKEN:-}
+      - DROPBOX_FOLDER=${DROPBOX_FOLDER:-/ab_uploads/}
+      # Flask – set SECRET_KEY in a .env file; a random one is generated at
+      # startup if omitted (sessions won't survive container restarts in that case)
+      - SECRET_KEY=${SECRET_KEY:-}
+      - DEBUG=${DEBUG:-false}
+    restart: unless-stopped
+
+volumes:
+  vectoreco_data:
