@@ -50,7 +50,9 @@ Create a `.env` file next to `docker-compose.yml` before starting (required for 
 
 ```dotenv
 # Required – Dropbox OAuth2 access token
-DROPBOX_ACCESS_TOKEN=your_token_here
+DROPBOX_APP_KEY=your_app_key_here
+DROPBOX_APP_SECRET=your_app_secret_here
+DROPBOX_REFRESH_TOKEN=your_refresh_token_here
 
 # Optional – Dropbox folder to sync (default: /ab_uploads/)
 DROPBOX_FOLDER=/ab_uploads/
@@ -68,7 +70,9 @@ docker compose up
 
 | Environment variable     | Default                        | Description                                          |
 |--------------------------|--------------------------------|------------------------------------------------------|
-| `DROPBOX_ACCESS_TOKEN`   | *(empty – must be set)*        | Dropbox OAuth2 access token                          |
+| `DROPBOX_APP_KEY`        | *(empty – must be set)*        | Dropbox app key                                      |
+| `DROPBOX_APP_SECRET`     | *(empty – must be set)*        | Dropbox app secret                                   |
+| `DROPBOX_REFRESH_TOKEN`  | *(empty – must be set)*        | Dropbox refresh token                                |
 | `DROPBOX_FOLDER`         | `/ab_uploads/`                 | Remote Dropbox folder to sync                        |
 | `SECRET_KEY`             | *(random, generated at start)* | Flask session secret key                             |
 | `DEBUG`                  | `false`                        | Enable Flask debug mode                              |

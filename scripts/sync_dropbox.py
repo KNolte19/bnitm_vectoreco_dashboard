@@ -25,11 +25,15 @@ import sys
 import time
 from pathlib import Path
 import dropbox
+from dotenv import load_dotenv
+load_dotenv()  # loads variables from .env file into os.environ
 
 # ---------------------------------------------------------------------------
 # Configuration – adjust as needed or override via environment variables
 # ---------------------------------------------------------------------------
-DROPBOX_ACCESS_TOKEN = os.getenv("DROPBOX_ACCESS_TOKEN", "")
+DROPBOX_APP_KEY      = os.getenv("DROPBOX_APP_KEY", "")
+DROPBOX_APP_SECRET   = os.getenv("DROPBOX_APP_SECRET", "")
+DROPBOX_REFRESH_TOKEN = os.getenv("DROPBOX_REFRESH_TOKEN", "")
 DROPBOX_FOLDER = os.getenv("DROPBOX_FOLDER", "/ab_uploads/")
 
 # Local paths (relative to repo root when run from the project directory)
@@ -81,10 +85,10 @@ def sync_once() -> int:
         )
         return 0
 
-    if not DROPBOX_ACCESS_TOKEN:
+    if not DROPBOX_APP_KEY or not DROPBOX_APP_SECRET or not DROPBOX_REFRESH_TOKEN:
         logger.error(
-            "No Dropbox access token configured. "
-            "Set the DROPBOX_ACCESS_TOKEN environment variable."
+            "Dropbox credentials not fully configured. "
+            "Set DROPBOX_APP_KEY, DROPBOX_APP_SECRET, and DROPBOX_REFRESH_TOKEN."
         )
         return 0
 
@@ -93,7 +97,11 @@ def sync_once() -> int:
     copied = 0
 
     try:
-        dbx = dropbox.Dropbox(DROPBOX_ACCESS_TOKEN)
+        dbx = dropbox.Dropbox(
+        oauth2_refresh_token=DROPBOX_REFRESH_TOKEN,
+        app_key=DROPBOX_APP_KEY,
+        app_secret=DROPBOX_APP_SECRET,
+    )
         result = dbx.files_list_folder(DROPBOX_FOLDER)
 
         while True:

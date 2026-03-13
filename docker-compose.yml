@@ -14,7 +14,9 @@ services:
       - ARCHIVE_DIR=/app/data/archive
       - DROPBOX_STATE_FILE=/app/data/.dropbox_synced.json
       # Override the Dropbox token if needed (falls back to built-in default)
-      - DROPBOX_ACCESS_TOKEN=${DROPBOX_ACCESS_TOKEN:-}
+      - DROPBOX_APP_KEY=${DROPBOX_APP_KEY:-}
+      - DROPBOX_APP_SECRET=${DROPBOX_APP_SECRET:-}
+      - DROPBOX_REFRESH_TOKEN=${DROPBOX_REFRESH_TOKEN:-}
       - DROPBOX_FOLDER=${DROPBOX_FOLDER:-/ab_uploads/}
       # Flask – set SECRET_KEY in a .env file; a random one is generated at
       # startup if omitted (sessions won't survive container restarts in that case)
