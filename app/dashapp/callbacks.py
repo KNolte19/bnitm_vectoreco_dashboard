@@ -1,7 +1,8 @@
 """Dash application callbacks."""
-from dash import Input, Output, html
+from dash import Input, Output, State, html, dcc
 from datetime import datetime
 from app.data import repository
+from app import notifications
 from app.dashapp.plots import (
     create_timeseries_plot,
     create_gap_bar_chart,
@@ -16,12 +17,12 @@ def register_callbacks(app):
     Args:
         app: Dash application instance
     """
-    
+
     @app.callback(
         [
-            Output('location-dropdown', 'options'),
-            Output('sensor-dropdown', 'options'),
-            Output('treatment-dropdown', 'options'),
+            Output('location-dropdown', 'data'),
+            Output('sensor-dropdown', 'data'),
+            Output('treatment-dropdown', 'data'),
         ],
         [
             Input('date-range-picker', 'start_date'),  # Triggers on initial load
@@ -33,15 +34,15 @@ def register_callbacks(app):
         """Update available options for sensor and treatment dropdowns based on location selection."""
         # Always show all locations
         locations = repository.get_all_locations()
-        location_options = [{'label': loc, 'value': loc} for loc in locations]
-        
+        location_data = [{'label': loc, 'value': loc} for loc in locations]
+
         # Filter sensors based on selected locations
         if selected_locations:
             available_sensors = repository.get_sensors_by_location(selected_locations)
         else:
             available_sensors = repository.get_all_sensor_ids()
-        sensor_options = [{'label': f'Sensor {s}', 'value': s} for s in available_sensors]
-        
+        sensor_data = [{'label': f'Sensor {s}', 'value': s} for s in available_sensors]
+
         # Filter treatments based on selected locations and sensors
         if selected_locations or selected_sensors:
             available_treatments = repository.get_treatments_by_location_and_sensor(
@@ -49,13 +50,13 @@ def register_callbacks(app):
             )
         else:
             available_treatments = repository.get_all_treatment_ids()
-        treatment_options = [
+        treatment_data = [
             {'label': TREATMENT_LABELS.get(t, f'Treatment {t}'), 'value': t}
             for t in available_treatments
         ]
-        
-        return location_options, sensor_options, treatment_options
-    
+
+        return location_data, sensor_data, treatment_data
+
     @app.callback(
         [
             Output('warning-banner', 'children'),
@@ -83,15 +84,15 @@ def register_callbacks(app):
             start_dt = datetime.fromisoformat(start_date).replace(hour=0, minute=0, second=0)
         else:
             start_dt = datetime.now().replace(hour=0, minute=0, second=0)
-        
+
         if end_date:
             end_dt = datetime.fromisoformat(end_date).replace(hour=23, minute=59, second=59)
         else:
             end_dt = datetime.now().replace(hour=23, minute=59, second=59)
-        
+
         start_str = start_dt.strftime('%Y-%m-%d %H:%M:%S')
         end_str = end_dt.strftime('%Y-%m-%d %H:%M:%S')
-        
+
         # ── Warning banner: check last 24 h for long gaps ──────────────────
         gap_issues = repository.check_sensor_gaps(gap_threshold_hours=3.0)
         if gap_issues:
@@ -99,26 +100,22 @@ def register_callbacks(app):
                 f"Sensor {i['sensor_id']} ({i['location']}): {i['max_gap_hours']} h without signal"
                 for i in gap_issues
             ]
-            warning_children = [
-                html.Strong("⚠ Connectivity warning: "),
-                html.Span(
-                    "The following sensors had no signal for ≥ 3 hours in the last 24 hours: "
-                    + "; ".join(issue_texts)
-                ),
-            ]
+            warning_children = (
+                "The following sensors had no signal for ≥ 3 hours in the last 24 hours: "
+                + "; ".join(issue_texts)
+            )
             warning_style = {
-                'display': 'block',
-                'backgroundColor': '#fff3cd',
-                'border': '1px solid #ffc107',
-                'borderRadius': 6,
-                'padding': '12px 20px',
-                'marginBottom': 20,
-                'color': '#856404',
-                'fontSize': 14,
+                "display": "block",
+                "position": "sticky",
+                "top": 0,
+                "zIndex": 999,
+                "fontSize": 15,
+                "fontWeight": "bold",
+                "marginBottom": 16,
             }
         else:
-            warning_children = []
-            warning_style = {'display': 'none'}
+            warning_children = ""
+            warning_style = {"display": "none"}
 
         # ── Fetch measurements for time series ─────────────────────────────
         df_measurements = repository.fetch_measurements(
@@ -128,39 +125,39 @@ def register_callbacks(app):
             sensor_ids=sensors if sensors else None,
             treatment_ids=treatments if treatments else None,
         )
-        
+
         # Create time series plot
         timeseries_fig = create_timeseries_plot(
             df_measurements,
             treatment_ids=treatments if treatments else None,
             temp_mode=temp_mode or 'absolute',
         )
-        
+
         # Fetch latest status
         df_latest = repository.fetch_latest_per_location_treatment()
-        
+
         # Format latest status for table
         if not df_latest.empty:
             df_latest_display = df_latest.copy()
             df_latest_display['window_start'] = df_latest_display['window_start'].dt.strftime('%Y-%m-%d %H:%M:%S')
             df_latest_display['window_end'] = df_latest_display['window_end'].dt.strftime('%Y-%m-%d %H:%M:%S')
-            
+
             # Round temperatures
             df_latest_display['control_temp'] = df_latest_display['control_temp'].round(2)
             df_latest_display['treatment_temp'] = df_latest_display['treatment_temp'].round(2)
             df_latest_display['connection_quality'] = df_latest_display['connection_quality'].round(3)
-            
+
             # Add treatment label column
             df_latest_display['treatment_label'] = df_latest_display['treatment_id'].map(
                 lambda t: TREATMENT_LABELS.get(t, f'Treatment {t}')
             )
-            
+
             latest_data = df_latest_display.to_dict('records')
             latest_columns = [{'name': col, 'id': col} for col in df_latest_display.columns]
         else:
             latest_data = []
             latest_columns = []
-        
+
         # ── Connectivity bar chart ─────────────────────────────────────────
         df_connectivity = repository.fetch_connectivity_stats(
             start=start_str,
@@ -183,7 +180,7 @@ def register_callbacks(app):
         else:
             gap_data = []
             gap_columns = []
-        
+
         return (
             warning_children,
             warning_style,
@@ -194,3 +191,54 @@ def register_callbacks(app):
             gap_data,
             gap_columns,
         )
+
+    # ── Toggle temperature threshold visibility ────────────────────────────
+    @app.callback(
+        Output('temp-threshold-container', 'style'),
+        Input('temp-warning-checkbox', 'checked'),
+    )
+    def toggle_temp_threshold(checked):
+        """Show or hide the temperature threshold input based on the checkbox."""
+        if checked:
+            return {}
+        return {'display': 'none'}
+
+    # ── Notification subscription ──────────────────────────────────────────
+    @app.callback(
+        Output('notification-feedback', 'children'),
+        Input('btn-subscribe', 'n_clicks'),
+        State('email-input', 'value'),
+        State('temp-warning-checkbox', 'checked'),
+        State('temp-threshold-input', 'value'),
+        State('conn-warning-checkbox', 'checked'),
+        State('grace-period-input', 'value'),
+        prevent_initial_call=True,
+    )
+    def save_notification_settings(
+        n_clicks, email, temp_warning, temp_threshold, conn_warning, grace_period
+    ):
+        """Save notification settings and provide feedback to the user."""
+        if not email or '@' not in email:
+            return "⚠ Please enter a valid email address."
+        try:
+            notifications.save_subscription(
+                email=email,
+                temp_warnings=bool(temp_warning),
+                temp_threshold=float(temp_threshold) if temp_threshold is not None else 2.5,
+                conn_warnings=bool(conn_warning),
+                grace_period_hours=float(grace_period) if grace_period is not None else 24,
+            )
+            return f"✅ Notification settings saved for {email}."
+        except Exception as exc:
+            return f"⚠ Error saving settings: {exc}"
+
+    # ── CSV download ───────────────────────────────────────────────────────
+    @app.callback(
+        Output('download-csv', 'data'),
+        Input('btn-download-csv', 'n_clicks'),
+        prevent_initial_call=True,
+    )
+    def download_all_data(n_clicks):
+        """Trigger a CSV download of all measurements."""
+        df = repository.fetch_all_measurements()
+        return dcc.send_data_frame(df.to_csv, filename="vectoreco_data_export.csv", index=False)

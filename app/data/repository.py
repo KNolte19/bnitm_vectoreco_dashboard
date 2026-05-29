@@ -376,6 +376,26 @@ def fetch_connectivity_stats(
         conn.close()
 
 
+def fetch_all_measurements() -> pd.DataFrame:
+    """Fetch all measurements from the database, ordered by window_start.
+
+    Returns:
+        DataFrame with all measurement records.
+    """
+    conn = get_connection()
+
+    query = "SELECT * FROM measurements ORDER BY window_start ASC"
+
+    try:
+        df = pd.read_sql_query(query, conn)
+        if not df.empty:
+            df['window_start'] = pd.to_datetime(df['window_start'])
+            df['window_end'] = pd.to_datetime(df['window_end'])
+        return df
+    finally:
+        conn.close()
+
+
 def check_sensor_gaps(gap_threshold_hours: float = 3.0) -> List[dict]:
     """Check for sensors that had a signal gap >= threshold in the last 24 h.
 

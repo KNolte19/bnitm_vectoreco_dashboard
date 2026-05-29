@@ -1,4 +1,5 @@
 """VectorEco Dashboard application."""
+import os
 from flask import Flask, redirect
 from app import config
 
@@ -21,5 +22,10 @@ def create_app():
     # Import and mount Dash app
     from app.dashapp import create_dash_app
     dash_app = create_dash_app(flask_app)
-    
+
+    # Start background alert scheduler if SMTP is configured
+    if os.environ.get('SMTP_HOST'):
+        from app.notifications import start_alert_scheduler
+        start_alert_scheduler()
+
     return flask_app

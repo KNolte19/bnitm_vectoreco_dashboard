@@ -1,0 +1,52 @@
+Defaulting to user installation because normal site-packages is not writeable
+Collecting dash-mantine-components
+  Downloading dash_mantine_components-2.7.0-py3-none-any.whl.metadata (4.6 kB)
+Collecting dash>=2 (from dash-mantine-components)
+  Downloading dash-4.1.0-py3-none-any.whl.metadata (11 kB)
+Collecting Flask<3.2,>=1.0.4 (from dash>=2->dash-mantine-components)
+  Downloading flask-3.1.3-py3-none-any.whl.metadata (3.2 kB)
+Collecting Werkzeug<3.2 (from dash>=2->dash-mantine-components)
+  Downloading werkzeug-3.1.8-py3-none-any.whl.metadata (4.0 kB)
+Collecting plotly>=5.0.0 (from dash>=2->dash-mantine-components)
+  Downloading plotly-6.7.0-py3-none-any.whl.metadata (8.6 kB)
+Collecting importlib-metadata (from dash>=2->dash-mantine-components)
+  Downloading importlib_metadata-9.0.0-py3-none-any.whl.metadata (4.5 kB)
+Requirement already satisfied: typing_extensions>=4.1.1 in /usr/lib/python3/dist-packages (from dash>=2->dash-mantine-components) (4.10.0)
+Requirement already satisfied: requests in /usr/lib/python3/dist-packages (from dash>=2->dash-mantine-components) (2.31.0)
+Collecting retrying (from dash>=2->dash-mantine-components)
+  Downloading retrying-1.4.2-py3-none-any.whl.metadata (5.5 kB)
+Collecting nest-asyncio (from dash>=2->dash-mantine-components)
+  Downloading nest_asyncio-1.6.0-py3-none-any.whl.metadata (2.8 kB)
+Requirement already satisfied: setuptools in /usr/lib/python3/dist-packages (from dash>=2->dash-mantine-components) (68.1.2)
+Collecting blinker>=1.9.0 (from Flask<3.2,>=1.0.4->dash>=2->dash-mantine-components)
+  Downloading blinker-1.9.0-py3-none-any.whl.metadata (1.6 kB)
+Requirement already satisfied: click>=8.1.3 in /usr/lib/python3/dist-packages (from Flask<3.2,>=1.0.4->dash>=2->dash-mantine-components) (8.1.6)
+Collecting itsdangerous>=2.2.0 (from Flask<3.2,>=1.0.4->dash>=2->dash-mantine-components)
+  Downloading itsdangerous-2.2.0-py3-none-any.whl.metadata (1.9 kB)
+Requirement already satisfied: jinja2>=3.1.2 in /usr/lib/python3/dist-packages (from Flask<3.2,>=1.0.4->dash>=2->dash-mantine-components) (3.1.2)
+Requirement already satisfied: markupsafe>=2.1.1 in /usr/lib/python3/dist-packages (from Flask<3.2,>=1.0.4->dash>=2->dash-mantine-components) (2.1.5)
+Collecting narwhals>=1.15.1 (from plotly>=5.0.0->dash>=2->dash-mantine-components)
+  Downloading narwhals-2.21.2-py3-none-any.whl.metadata (16 kB)
+Requirement already satisfied: packaging in /usr/lib/python3/dist-packages (from plotly>=5.0.0->dash>=2->dash-mantine-components) (24.0)
+Collecting zipp>=3.20 (from importlib-metadata->dash>=2->dash-mantine-components)
+  Downloading zipp-4.1.0-py3-none-any.whl.metadata (3.6 kB)
+Downloading dash_mantine_components-2.7.0-py3-none-any.whl (1.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.4/1.4 MB 123.7 MB/s eta 0:00:00
+Downloading dash-4.1.0-py3-none-any.whl (7.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.2/7.2 MB 182.7 MB/s eta 0:00:00
+Downloading flask-3.1.3-py3-none-any.whl (103 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 103.4/103.4 kB 38.9 MB/s eta 0:00:00
+Downloading plotly-6.7.0-py3-none-any.whl (9.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.9/9.9 MB 187.3 MB/s eta 0:00:00
+Downloading werkzeug-3.1.8-py3-none-any.whl (226 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 226.5/226.5 kB 80.2 MB/s eta 0:00:00
+Downloading importlib_metadata-9.0.0-py3-none-any.whl (27 kB)
+Downloading nest_asyncio-1.6.0-py3-none-any.whl (5.2 kB)
+Downloading retrying-1.4.2-py3-none-any.whl (10 kB)
+Downloading blinker-1.9.0-py3-none-any.whl (8.5 kB)
+Downloading itsdangerous-2.2.0-py3-none-any.whl (16 kB)
+Downloading narwhals-2.21.2-py3-none-any.whl (451 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 451.2/451.2 kB 107.4 MB/s eta 0:00:00
+Downloading zipp-4.1.0-py3-none-any.whl (10 kB)
+Installing collected packages: zipp, Werkzeug, retrying, nest-asyncio, narwhals, itsdangerous, blinker, plotly, importlib-metadata, Flask, dash, dash-mantine-components
+Successfully installed Flask-3.1.3 Werkzeug-3.1.8 blinker-1.9.0 dash-4.1.0 dash-mantine-components-2.7.0 importlib-metadata-9.0.0 itsdangerous-2.2.0 narwhals-2.21.2 nest-asyncio-1.6.0 plotly-6.7.0 retrying-1.4.2 zipp-4.1.0
