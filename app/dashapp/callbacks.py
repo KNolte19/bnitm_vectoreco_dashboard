@@ -108,8 +108,6 @@ def register_callbacks(app):
             warning_title = "⚠ Connectivity Warning"
             warning_style = {
                 "display": "block",
-                "position": "sticky",
-                "top": 0,
                 "zIndex": 999,
                 "fontSize": 15,
                 "fontWeight": "bold",

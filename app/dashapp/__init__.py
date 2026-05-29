@@ -16,6 +16,7 @@ def create_dash_app(flask_app):
     """
     dash_app = Dash(
         __name__,
+        title = "Mirrormere Dashboard",
         server=flask_app,
         url_base_pathname='/dashboard/',
         suppress_callback_exceptions=True

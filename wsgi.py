@@ -1,7 +1,7 @@
 """WSGI entry point for gunicorn.
 
 Run with:
-    gunicorn wsgi:application --bind 0.0.0.0:8000 --workers 4
+    gunicorn wsgi:application --bind 0.0.0.0:10003 --workers 4
 """
 import sys
 from pathlib import Path

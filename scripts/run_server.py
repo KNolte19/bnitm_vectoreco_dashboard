@@ -13,4 +13,4 @@ if __name__ == '__main__':
     print(f"Starting VectorEco Dashboard")
     print(f"Database: {config.DB_PATH}")
     print(f"Access dashboard at: http://localhost:5000/dashboard/")
-    app.run(host='0.0.0.0', port=5000, debug=config.DEBUG)
+    app.run(host='0.0.0.0', port=10003, debug=config.DEBUG)

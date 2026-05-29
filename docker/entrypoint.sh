@@ -42,9 +42,9 @@ python scripts/run_ingest.py --mode once
   done
 ) &
 
-echo "==> Starting Gunicorn on port 8000..."
+echo "==> Starting Gunicorn on port 10003..."
 exec gunicorn wsgi:application \
-  --bind 0.0.0.0:8000 \
+  --bind 0.0.0.0:10003 \
   --workers 2 \
   --timeout 120 \
   --access-logfile - \

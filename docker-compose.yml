@@ -4,7 +4,7 @@ services:
   app:
     build: .
     ports:
-      - "8000:8000"
+      - "10003:10003"
     volumes:
       - vectoreco_data:/app/data
     environment:

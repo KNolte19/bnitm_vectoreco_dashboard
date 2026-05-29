@@ -13,6 +13,6 @@ COPY . .
 RUN chmod +x docker/entrypoint.sh
 
 # Expose the Gunicorn port
-EXPOSE 8000
+EXPOSE 10003
 
 ENTRYPOINT ["docker/entrypoint.sh"]

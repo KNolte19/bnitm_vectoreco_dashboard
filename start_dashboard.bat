@@ -8,7 +8,7 @@ docker compose up -d
 timeout /t 5 /nobreak > nul
 
 :: Open the dashboard in the default browser
-start http://localhost:8000/dashboard/
+start http://localhost:10003/dashboard/
 
-echo Dashboard is running at http://localhost:8000/dashboard/
+echo Dashboard is running at http://localhost:10003/dashboard/
 echo To stop it, run: docker compose down

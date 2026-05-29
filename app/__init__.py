@@ -1,4 +1,4 @@
-"""VectorEco Dashboard application."""
+"""Mirrormere Dashboard application."""
 import os
 from flask import Flask, redirect
 from app import config

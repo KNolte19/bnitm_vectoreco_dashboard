@@ -28,8 +28,6 @@ def create_layout():
                 color="yellow",
                 style={
                     "display": "none",
-                    "position": "sticky",
-                    "top": 0,
                     "zIndex": 999,
                     "fontSize": 15,
                     "fontWeight": "bold",
@@ -39,7 +37,7 @@ def create_layout():
 
             # ── Page title ───────────────────────────────────────────────────
             dmc.Title(
-                "VectorEco Dashboard",
+                "Mirrormere 🌊",
                 order=1,
                 style={"textAlign": "center", "marginBottom": 24},
             ),
