@@ -1,4 +1,5 @@
 """Dash application initialization and mounting."""
+import dash_mantine_components as dmc
 from dash import Dash
 from app.dashapp.layout import create_layout
 from app.dashapp.callbacks import register_callbacks
@@ -20,8 +21,8 @@ def create_dash_app(flask_app):
         suppress_callback_exceptions=True
     )
     
-    # Set layout
-    dash_app.layout = create_layout()
+    # Wrap layout in MantineProvider (required by dash-mantine-components)
+    dash_app.layout = dmc.MantineProvider(children=create_layout())
     
     # Register callbacks
     register_callbacks(dash_app)
