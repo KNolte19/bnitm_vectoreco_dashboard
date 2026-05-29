@@ -94,13 +94,21 @@ def send_warning_email(to_email: str, subject: str, body: str) -> None:
         body: Plain-text email body.
 
     Raises:
-        Exception: Re-raises any SMTP errors after logging.
+        ValueError: If required SMTP credentials are missing.
+        smtplib.SMTPException: On SMTP transmission errors.
     """
-    host = os.environ.get("SMTP_HOST", "")
+    host = os.environ.get("SMTP_HOST", "").strip()
     port = int(os.environ.get("SMTP_PORT", 587))
-    user = os.environ.get("SMTP_USER", "")
+    user = os.environ.get("SMTP_USER", "").strip()
     password = os.environ.get("SMTP_PASSWORD", "")
-    from_addr = os.environ.get("SMTP_FROM", user)
+    from_addr = os.environ.get("SMTP_FROM", user).strip()
+
+    if not host:
+        raise ValueError("SMTP_HOST is not configured")
+    if not user:
+        raise ValueError("SMTP_USER is not configured")
+    if not password:
+        raise ValueError("SMTP_PASSWORD is not configured")
 
     msg = MIMEMultipart()
     msg["From"] = from_addr
@@ -108,10 +116,16 @@ def send_warning_email(to_email: str, subject: str, body: str) -> None:
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain"))
 
-    with smtplib.SMTP(host, port) as smtp:
-        smtp.starttls()
-        smtp.login(user, password)
-        smtp.sendmail(from_addr, to_email, msg.as_string())
+    try:
+        with smtplib.SMTP(host, port, timeout=30) as smtp:
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.ehlo()
+            smtp.login(user, password)
+            smtp.sendmail(from_addr, to_email, msg.as_string())
+    except smtplib.SMTPException as exc:
+        logger.error("SMTP error sending to %s: %s", to_email, exc)
+        raise
 
 
 def check_and_send_alerts() -> None:
@@ -216,11 +230,17 @@ def check_and_send_alerts() -> None:
                     state.setdefault("notified", []).append(email)
 
         if messages:
+            alert_types = []
+            if any("Connectivity" in m for m in messages):
+                alert_types.append("Connectivity")
+            if any("Temperature" in m for m in messages):
+                alert_types.append("Temperature")
+            subject = "VectorEco Dashboard Alert: " + " & ".join(alert_types)
             body = "\n\n".join(messages)
             try:
                 send_warning_email(
                     email,
-                    "VectorEco Dashboard Alert",
+                    subject,
                     body,
                 )
                 logger.info("Alert email sent to %s", email)

@@ -24,7 +24,7 @@ def create_layout():
             # ── Sticky warning banner (hidden when no issues) ────────────────
             dmc.Alert(
                 id="warning-banner",
-                title="⚠ Connectivity Warning",
+                title="",
                 color="yellow",
                 style={
                     "display": "none",

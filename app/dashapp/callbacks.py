@@ -60,6 +60,7 @@ def register_callbacks(app):
     @app.callback(
         [
             Output('warning-banner', 'children'),
+            Output('warning-banner', 'title'),
             Output('warning-banner', 'style'),
             Output('timeseries-plot', 'figure'),
             Output('latest-status-table', 'data'),
@@ -104,6 +105,7 @@ def register_callbacks(app):
                 "The following sensors had no signal for ≥ 3 hours in the last 24 hours: "
                 + "; ".join(issue_texts)
             )
+            warning_title = "⚠ Connectivity Warning"
             warning_style = {
                 "display": "block",
                 "position": "sticky",
@@ -115,6 +117,7 @@ def register_callbacks(app):
             }
         else:
             warning_children = ""
+            warning_title = ""
             warning_style = {"display": "none"}
 
         # ── Fetch measurements for time series ─────────────────────────────
@@ -183,6 +186,7 @@ def register_callbacks(app):
 
         return (
             warning_children,
+            warning_title,
             warning_style,
             timeseries_fig,
             latest_data,
@@ -218,17 +222,19 @@ def register_callbacks(app):
         n_clicks, email, temp_warning, temp_threshold, conn_warning, grace_period
     ):
         """Save notification settings and provide feedback to the user."""
-        if not email or '@' not in email:
+        import re
+        email_re = re.compile(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$')
+        if not email or not email_re.match(email.strip()):
             return "⚠ Please enter a valid email address."
         try:
             notifications.save_subscription(
-                email=email,
+                email=email.strip(),
                 temp_warnings=bool(temp_warning),
                 temp_threshold=float(temp_threshold) if temp_threshold is not None else 2.5,
                 conn_warnings=bool(conn_warning),
                 grace_period_hours=float(grace_period) if grace_period is not None else 24,
             )
-            return f"✅ Notification settings saved for {email}."
+            return f"✅ Notification settings saved for {email.strip()}."
         except Exception as exc:
             return f"⚠ Error saving settings: {exc}"
 
