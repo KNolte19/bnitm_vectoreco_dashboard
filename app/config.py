@@ -6,12 +6,19 @@ from pathlib import Path
 # Base directory
 BASE_DIR = Path(__file__).parent.parent.absolute()
 
-# Database configuration
+# Database configuration (Felix)
 DB_PATH = os.getenv('DB_PATH', str(BASE_DIR / 'data' / 'measurements.db'))
 
-# Ingestion configuration
+# Ingestion configuration (Felix)
 INBOX_DIR = os.getenv('INBOX_DIR', str(BASE_DIR / 'data' / 'inbox'))
 ARCHIVE_DIR = os.getenv('ARCHIVE_DIR', str(BASE_DIR / 'data' / 'archive'))
+
+# Database configuration (Leif)
+LEIF_DB_PATH = os.getenv('LEIF_DB_PATH', str(BASE_DIR / 'data' / 'leif_measurements.db'))
+
+# Ingestion configuration (Leif)
+LEIF_INBOX_DIR = os.getenv('LEIF_INBOX_DIR', str(BASE_DIR / 'data' / 'leif_inbox'))
+LEIF_ARCHIVE_DIR = os.getenv('LEIF_ARCHIVE_DIR', str(BASE_DIR / 'data' / 'leif_archive'))
 
 # Timezone (all timestamps are UTC)
 TIMEZONE = 'UTC'
