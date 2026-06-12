@@ -9,6 +9,7 @@ from app.dashapp.plots import (
     create_connectivity_bar_chart,
 )
 from app.ingestion.parser import TREATMENT_LABELS
+from app.dashapp.leif_callbacks import register_leif_callbacks
 
 
 def register_callbacks(app):
@@ -17,6 +18,7 @@ def register_callbacks(app):
     Args:
         app: Dash application instance
     """
+    register_leif_callbacks(app)
 
     @app.callback(
         [

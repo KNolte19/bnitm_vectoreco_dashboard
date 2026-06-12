@@ -22,3 +22,17 @@ sensors:
     location: "BNITM Garden Testing -9"
     frequency_minutes: 15
     max_gap_hours: 3
+
+# Leif's sensor configuration (site 3, replicas 1–3)
+# BS = Breeding Site, RS = Resting Site
+leif_sensors:
+  site: 3
+  frequency_minutes: 15
+  max_gap_hours: 1
+  replicas:
+    - id: 1
+      name: "Site 3 – Replica 1"
+    - id: 2
+      name: "Site 3 – Replica 2"
+    - id: 3
+      name: "Site 3 – Replica 3"

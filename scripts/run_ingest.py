@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.absolute()))
 
 import scripts.sync_dropbox as sync_dropbox
 from app.ingestion.ingest import ingest_folder
+from app.leif.ingest import ingest_leif_folder
 from app import config
 
 logging.basicConfig(
@@ -65,7 +66,7 @@ def main():
             delete_after=args.delete
         )
         
-        print("\nIngestion Summary:")
+        print("\nFelix Ingestion Summary:")
         print(f"  Files found:    {stats.found}")
         print(f"  Files parsed:   {stats.parsed}")
         print(f"  Records inserted: {stats.inserted}")
@@ -77,8 +78,24 @@ def main():
             print("\nError Details:")
             for error in stats.error_details:
                 print(f"  - {error}")
-        
-        return 0 if stats.errors == 0 else 1
+
+        leif_stats = ingest_leif_folder(delete_after=args.delete)
+
+        print("\nLeif Ingestion Summary:")
+        print(f"  Files found:    {leif_stats.found}")
+        print(f"  Files parsed:   {leif_stats.parsed}")
+        print(f"  BS inserted:    {leif_stats.inserted_bs}")
+        print(f"  RS inserted:    {leif_stats.inserted_rs}")
+        print(f"  Duplicates:     {leif_stats.duplicates}")
+        print(f"  Dropped:        {leif_stats.dropped}")
+        print(f"  Errors:         {leif_stats.errors}")
+
+        if leif_stats.error_details:
+            print("\nLeif Error Details:")
+            for error in leif_stats.error_details:
+                print(f"  - {error}")
+
+        return 0 if (stats.errors == 0 and leif_stats.errors == 0) else 1
     
     else:  # watch mode
         logger.info(f"Watching folder every {args.interval} seconds (Ctrl+C to stop)")
@@ -86,6 +103,7 @@ def main():
         try:
             while True:
                 sync_dropbox.sync_once()
+                sync_dropbox.sync_leif_once()
 
                 stats = ingest_folder(
                     inbox_path=args.inbox,
@@ -95,9 +113,18 @@ def main():
                 
                 if stats.found > 0:
                     logger.info(
-                        f"Processed {stats.found} files: "
+                        f"Felix: {stats.found} files, "
                         f"{stats.inserted} inserted, {stats.duplicates} duplicates, "
                         f"{stats.dropped} dropped"
+                    )
+
+                leif_stats = ingest_leif_folder(delete_after=args.delete)
+
+                if leif_stats.found > 0:
+                    logger.info(
+                        f"Leif: {leif_stats.found} files, "
+                        f"{leif_stats.inserted_bs} BS + {leif_stats.inserted_rs} RS inserted, "
+                        f"{leif_stats.duplicates} duplicates, {leif_stats.dropped} dropped"
                     )
                 
                 time.sleep(args.interval)
