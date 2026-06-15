@@ -28,7 +28,7 @@ sensors:
 leif_sensors:
   site: 3
   frequency_minutes: 15
-  max_gap_hours: 1
+  max_gap_hours: 3
   replicas:
     - id: 1
       name: "Site 3 – Replica 1"

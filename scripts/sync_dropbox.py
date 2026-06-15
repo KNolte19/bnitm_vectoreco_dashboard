@@ -40,7 +40,7 @@ DROPBOX_REFRESH_TOKEN = os.getenv("DROPBOX_REFRESH_TOKEN", "")
 DROPBOX_FOLDER = os.getenv("DROPBOX_FOLDER", "/ab_uploads/")
 
 # Leif's separate Dropbox folder (uses the same API credentials)
-LEIF_DROPBOX_FOLDER = os.getenv("LEIF_DROPBOX_FOLDER", "/leif_uploads/")
+LEIF_DROPBOX_FOLDER = os.getenv("LEIF_DROPBOX_FOLDER", "/NE/")
 
 # Local paths (relative to repo root when run from the project directory)
 _REPO_ROOT = Path(__file__).parent.parent.absolute()
