@@ -17,11 +17,12 @@ sensors:
     frequency_minutes: 15
     max_gap_hours: 3
 
-  - id: 9
-    name: "Sensor 9"
-    location: "BNITM Garden Testing -9"
+  - id: 7
+    name: "Sensor 7"
+    location: "Stadtpark, Hamburg"
     frequency_minutes: 15
-    max_gap_hours: 3
+    max_gap_hours: 25
+
 
 # Leif's sensor configuration (site 3, replicas 1–3)
 # BS = Breeding Site, RS = Resting Site
